@@ -16,17 +16,18 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.connectors
 
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.{GatewayTimeoutException, HeaderCarrier, HttpClient}
 import uk.gov.hmrc.scachangeofcircumstances.config.AppConfig
 import uk.gov.hmrc.scachangeofcircumstances.connectors.IfDesignatoryDetailsHttpParser._
-import uk.gov.hmrc.scachangeofcircumstances.models.IfErrorResponse
+import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
+import uk.gov.hmrc.scachangeofcircumstances.models.{GatewayTimeout, IfErrorResponse}
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.IfContactDetails
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 
-class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit executionContext: ExecutionContext) {
+class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit executionContext: ExecutionContext) extends Logging {
 
   val host = appConfig.integrationFrameworkHost
   val port = appConfig.integrationFrameworkPort
@@ -42,7 +43,12 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
 
   def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[IfDesignatoryDetailsResponse] = {
 
-    http.GET[IfDesignatoryDetailsResponse](s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$fields")
+    http.GET[IfDesignatoryDetailsResponse](s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$fields").recover {
+      case e: GatewayTimeoutException => {
+        logger.error(s"Request timeout from IF: $e")
+        Left(Seq(GatewayTimeout))
+      }
+    }
   }
 
   def getContactDetails(): Future[IfContactDetailsResponse] = ???

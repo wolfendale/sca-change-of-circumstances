@@ -18,24 +18,28 @@ package uk.gov.hmrc.scachangeofcircumstances.connectors
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, badRequest, ok, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
+import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.time.Span
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.scachangeofcircumstances.models._
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
-import uk.gov.hmrc.scachangeofcircumstances.models.{BadRequest, GatewayTimeout, InvalidJson}
 
 import java.time.LocalDate
 
 class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterAll with BeforeAndAfterEach {
 
   val server: WireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
+
+  val timeout: Timeout = Timeout(Span.Max)
 
   override protected def beforeAll(): Unit = {
     server.start()
@@ -84,8 +88,6 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
         val app = application()
 
         running(app) {
-
-
 
           val expectedResult =
             """
@@ -164,7 +166,7 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails(nino).futureValue mustEqual expectedObj
+          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Right(expectedObj)
         }
       }
 
@@ -208,33 +210,85 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails(nino).futureValue mustEqual Left(InvalidJson)
+          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(InvalidJson))
         }
       }
     }
 
-    "should return ErrorResponse when IF returns error" in {
+    "should return ErrorResponse when IF returns error" - {
 
-      val expectedResponse = """{
-                               |  "failures": [
-                               |    {
-                               |      "code": "INVALID_CORRELATIONID",
-                               |      "reason": "Submission has not passed validation. Invalid Header CorrelationId."
-                               |    }
-                               |  ]
-                               |}""".stripMargin
+      "bad request" in {
+        val expectedResponse = """{
+                                 |  "failures": [
+                                 |    {
+                                 |      "code": "INVALID_CORRELATIONID",
+                                 |      "reason": "Submission has not passed validation. Invalid Header CorrelationId."
+                                 |    }
+                                 |  ]
+                                 |}""".stripMargin
 
-      val app = application()
+        val app = application()
 
-      running(app) {
-        server.stubFor(
-          WireMock.get(urlEqualTo(url))
-            .willReturn(badRequest().withBody(expectedResponse))
-        )
+        running(app) {
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(badRequest().withBody(expectedResponse))
+          )
 
-        val connector = app.injector.instanceOf[IfConnector]
-        connector.getDesignatoryDetails(nino).futureValue mustEqual Left(BadRequest)
+          val connector = app.injector.instanceOf[IfConnector]
+          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(BadRequest))
+        }
       }
+
+      "server error" in {
+        val expectedResponse = """{
+                                 |  "failures": [
+                                 |    {
+                                 |      "code": "SERVER_ERROR",
+                                 |      "reason": "IF is currently experiencing problems that require live service intervention."
+                                 |    }
+                                 |  ]
+                                 |}""".stripMargin
+
+        val app = application()
+
+        running(app) {
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(serverError().withBody(expectedResponse))
+          )
+
+          val connector = app.injector.instanceOf[IfConnector]
+          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(InternalServerError))
+        }
+      }
+
+      "service unavailable" in {
+        val expectedResponse = """{
+                                 |        "failures": [
+                                 |        {
+                                 |          "code": "SERVICE_UNAVAILABLE",
+                                 |          "reason": "Dependent systems are currently not responding."
+                                 |        }
+                                 |        ]
+                                 |      }""".stripMargin
+
+        val app = application()
+
+        running(app) {
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(serviceUnavailable().withBody(expectedResponse))
+          )
+
+          val connector = app.injector.instanceOf[IfConnector]
+          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(ServiceUnavailable))
+        }
+      }
+
+
+
+
     }
 
     "should return ErrorResponse when returns timeout exception" in {
@@ -246,11 +300,12 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
           WireMock.get(urlEqualTo(url))
             .willReturn(aResponse()
             .withStatus(200)
-            .withFixedDelay(50000))
+            .withBody("true")
+            .withFixedDelay(30000))
         )
 
         val connector = app.injector.instanceOf[IfConnector]
-        connector.getDesignatoryDetails(nino).futureValue mustEqual GatewayTimeout
+        connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(GatewayTimeout))
       }
     }
   }

@@ -16,18 +16,18 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.connectors
 
-import play.api.http.Status.OK
+import play.api.http.Status._
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.{HttpReads, HttpResponse}
 import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
 import uk.gov.hmrc.scachangeofcircumstances.models.IfErrorResponse._
+import uk.gov.hmrc.scachangeofcircumstances.models._
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.IfDesignatoryDetails
-import uk.gov.hmrc.scachangeofcircumstances.models.{ErrorResponse, IfErrorResponse, InvalidJson}
 
 
 object IfDesignatoryDetailsHttpParser {
 
-  type IfDesignatoryDetailsResponse = Either[ErrorResponse, IfDesignatoryDetails]
+  type IfDesignatoryDetailsResponse = Either[Seq[ErrorResponse], IfDesignatoryDetails]
 
   implicit object IfDesignatoryDetailsReads extends HttpReads[IfDesignatoryDetailsResponse] with Logging {
     override def read(method: String, url: String, response: HttpResponse): IfDesignatoryDetailsResponse = {
@@ -36,17 +36,31 @@ object IfDesignatoryDetailsHttpParser {
           case JsSuccess(value, path) => Right(value)
           case JsError(errors) => {
             logger.error("Could not parse success response from IF", errors)
-            Left(InvalidJson)
+            Left(Seq(InvalidJson))
           }
         }
-        case _ => response.json.validate[IfErrorResponse] match {
-          case JsSuccess(value, path) => {
-            Left(InvalidJson)
-          }
-          case JsError(errors) => {
-            logger.error("Could not parse error response from IF", errors)
-            Left(InvalidJson)
-          }
+        case _ => getErrorResponse(response)
+      }
+    }
+
+    def getErrorResponse(response: HttpResponse): IfDesignatoryDetailsResponse = {
+      response.json.validate[IfErrorResponse] match {
+        case JsSuccess(value, path) => {
+          Left(value.failures.map(x =>
+            response.status match {
+              case BAD_REQUEST => BadRequest
+              case NOT_FOUND => NotFound
+              case UNPROCESSABLE_ENTITY => UnprocessableEntity
+              case PRECONDITION_REQUIRED => PreconditionRequired
+              case INTERNAL_SERVER_ERROR => InternalServerError
+              case BAD_GATEWAY => BadGateway
+              case SERVICE_UNAVAILABLE => ServiceUnavailable
+            }
+          ).toSeq)
+        }
+        case JsError(errors) => {
+          logger.error("Could not parse error response from IF", errors)
+          Left(Seq(InvalidJson))
         }
       }
     }
