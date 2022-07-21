@@ -16,21 +16,34 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.connectors
 
-import uk.gov.hmrc.http.HttpClient
-import uk.gov.hmrc.scachangeofcircumstances.models.ErrorResponse
-import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.{IfContactDetails, IfDesignatoryDetails}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.scachangeofcircumstances.config.AppConfig
+import uk.gov.hmrc.scachangeofcircumstances.connectors.IfDesignatoryDetailsHttpParser._
+import uk.gov.hmrc.scachangeofcircumstances.models.IfErrorResponse
+import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.IfContactDetails
 
 import javax.inject.Inject
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 
-class IfConnector @Inject()(http: HttpClient) {
+class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit executionContext: ExecutionContext) {
 
-  type IfDesignatoryDetailsResponse = Either[ErrorResponse, IfDesignatoryDetails]
+  val host = appConfig.integrationFrameworkHost
+  val port = appConfig.integrationFrameworkPort
 
-  type IfContactDetailsResponse = Either[ErrorResponse, IfContactDetails]
+  val fields: String =
+    "details(marriageStatusType),nameList(name(nameSequenceNumber,nameType,titleType," +
+      "requestedName,nameStartDate,nameEndDate,firstForename,secondForename,surname))," +
+      "addressList(address(addressSequenceNumber,countryCode,addressType,addressStartDate," +
+      "addressEndDate,addressLine1,addressLine2,addressLine3,addressLine4,addressLine5," +
+      "addressPostcode))"
 
-  def getDesignatoryDetails(): Future[IfDesignatoryDetailsResponse] = ???
+  type IfContactDetailsResponse = Either[IfErrorResponse, IfContactDetails]
+
+  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[IfDesignatoryDetailsResponse] = {
+
+    http.GET[IfDesignatoryDetailsResponse](s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$fields")
+  }
 
   def getContactDetails(): Future[IfContactDetailsResponse] = ???
 

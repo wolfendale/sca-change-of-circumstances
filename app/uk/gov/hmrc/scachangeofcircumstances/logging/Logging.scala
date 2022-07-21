@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.scachangeofcircumstances.models
+package uk.gov.hmrc.scachangeofcircumstances.logging
 
-import play.api.libs.json.{Json, Reads}
+import org.slf4j.{Logger, LoggerFactory}
 
-case class IfErrorResponse(failures: Seq[IfFailure])
+trait Logging {
 
-object IfErrorResponse {
-  implicit val reads: Reads[IfErrorResponse] = Json.reads[IfErrorResponse]
-}
-
-case class IfFailure(code: String, reason: String)
-
-object IfFailure {
-  implicit val reads: Reads[IfFailure] = Json.reads[IfFailure]
+  protected val logger: Logger =
+    LoggerFactory.getLogger("application." + getClass.getCanonicalName)
 }

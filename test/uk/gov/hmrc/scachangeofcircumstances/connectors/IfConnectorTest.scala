@@ -18,7 +18,7 @@ package uk.gov.hmrc.scachangeofcircumstances.connectors
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, ok, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, badRequest, ok, urlEqualTo}
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -27,6 +27,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.running
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
 import uk.gov.hmrc.scachangeofcircumstances.models.{BadRequest, GatewayTimeout, InvalidJson}
 
@@ -51,16 +52,28 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
     super.afterAll()
   }
 
-  private def application(): Application = new GuiceApplicationBuilder().build()
+  private def application(): Application = new GuiceApplicationBuilder()
+    .configure(
+      "microservice.services.integration-framework.host" -> "127.0.0.1",
+      "microservice.services.integration-framework.port" -> server.port(),
+      "microservice.services.integration-framework.authorizationToken" -> "auth-token",
+      "microservice.services.integration-framework.environment" -> "test-environment",
+      "metrics.enabled" -> false,
+      "auditing.enabled" -> false
+    ).build()
 
   val nino: String = "AB049513"
 
   val fields: String =
-    """details(marriageStatusType),nameList(name(nameSequenceNumber,nameType,titleType,
-      |requestedName,nameStartDate,nameEndDate,firstForename,secondForename,surname)),
-      |addressList(address(addressSequenceNumber,countryCode,addressType,addressStartDate,
-      |addressEndDate,addressLine1,addressLine2,addressLine3,addressLine4,addressLine5,
-      |addressPostcode))""".stripMargin
+    "details(marriageStatusType),nameList(name(nameSequenceNumber,nameType,titleType," +
+      "requestedName,nameStartDate,nameEndDate,firstForename,secondForename,surname))," +
+      "addressList(address(addressSequenceNumber,countryCode,addressType,addressStartDate," +
+      "addressEndDate,addressLine1,addressLine2,addressLine3,addressLine4,addressLine5," +
+      "addressPostcode))"
+
+  val url = s"/individuals/details/nino/$nino?fields=$fields"
+
+  implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
 
   "getDesignatoryDetails" - {
 
@@ -71,6 +84,8 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
         val app = application()
 
         running(app) {
+
+
 
           val expectedResult =
             """
@@ -114,7 +129,7 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
               |""".stripMargin
 
           server.stubFor(
-            WireMock.get(urlEqualTo(s"http://localhost:10602/individuals/details/nino/$nino?fields=$fields"))
+            WireMock.get(urlEqualTo(url))
               .willReturn(ok(expectedResult))
           )
 
@@ -149,7 +164,7 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails().futureValue mustEqual expectedObj
+          connector.getDesignatoryDetails(nino).futureValue mustEqual expectedObj
         }
       }
 
@@ -188,12 +203,12 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
               |""".stripMargin
 
           server.stubFor(
-            WireMock.get(urlEqualTo(s"http://localhost:10602/individuals/details/nino/$nino?fields=$fields"))
+            WireMock.get(urlEqualTo(url))
               .willReturn(ok(expectedResult))
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails().futureValue mustEqual InvalidJson
+          connector.getDesignatoryDetails(nino).futureValue mustEqual Left(InvalidJson)
         }
       }
     }
@@ -213,12 +228,12 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
 
       running(app) {
         server.stubFor(
-          WireMock.get(urlEqualTo(s"http://localhost:10602/individuals/details/nino/$nino?fields=$fields"))
-            .willReturn(ok(expectedResponse))
+          WireMock.get(urlEqualTo(url))
+            .willReturn(badRequest().withBody(expectedResponse))
         )
 
         val connector = app.injector.instanceOf[IfConnector]
-        connector.getDesignatoryDetails().futureValue mustEqual BadRequest
+        connector.getDesignatoryDetails(nino).futureValue mustEqual Left(BadRequest)
       }
     }
 
@@ -228,14 +243,14 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
 
       running(app) {
         server.stubFor(
-          WireMock.get(urlEqualTo(s"http://localhost:10602/individuals/details/nino/$nino?fields=$fields"))
+          WireMock.get(urlEqualTo(url))
             .willReturn(aResponse()
             .withStatus(200)
             .withFixedDelay(50000))
         )
 
         val connector = app.injector.instanceOf[IfConnector]
-        connector.getDesignatoryDetails().futureValue mustEqual GatewayTimeout
+        connector.getDesignatoryDetails(nino).futureValue mustEqual GatewayTimeout
       }
     }
   }

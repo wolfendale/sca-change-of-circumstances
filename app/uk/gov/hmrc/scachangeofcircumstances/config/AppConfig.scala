@@ -23,4 +23,13 @@ import play.api.Configuration
 class AppConfig @Inject()(config: Configuration) {
 
   val appName: String = config.get[String]("appName")
+
+  val integrationFrameworkProtocol = config.get[String]("microservice.services.integration-framework.protocol")
+  val integrationFrameworkHost = config.get[String]("microservice.services.integration-framework.host")
+  val integrationFrameworkPort = config.get[Int]("microservice.services.integration-framework.port")
+  val integrationFrameworkAuthToken = config.get[String]("microservice.services.integration-framework.authorization-token")
+  val integrationFrameworkEnvironment = config.get[String]("microservice.services.integration-framework.environment")
+
+  val ifBaseUrl = s"$integrationFrameworkProtocol://$integrationFrameworkHost:$integrationFrameworkPort"
+
 }
