@@ -16,23 +16,32 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.models
 
+import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.{IfAddress, IfName}
 
 case class PersonalDetails(
-                          name: Option[Name],
-                          maritalStatus: Option[MaritalStatus],
-                          residentialAddress: Option[Address],
-                          correspondenceAddress: Option[Address]
+                          name: Option[Name] = scala.None,
+                          maritalStatus: Option[MaritalStatus] = scala.None,
+                          residentialAddress: Option[Address] = scala.None,
+                          correspondenceAddress: Option[Address] = scala.None
                           )
 
-case class Name( firstForename: Option[String],
-                 secondForename: Option[String],
-                 surname: Option[String],
-                 requestedName: Option[String],
-                 title: Option[Title]
+object PersonalDetails {
+
+  implicit val format: OFormat[PersonalDetails] = Json.format[PersonalDetails]
+
+}
+
+case class Name( firstForename: Option[String] = scala.None,
+                 secondForename: Option[String] = scala.None,
+                 surname: Option[String] = scala.None,
+                 requestedName: Option[String] = scala.None,
+                 title: Option[Title] = scala.None
                )
 
 object Name {
+
+  implicit val format: OFormat[Name] = Json.format[Name]
 
   def apply(name: IfName): Name =
     new Name(
@@ -43,16 +52,18 @@ object Name {
       title = name.titleType.map(Title.apply))
 }
 
-case class Address( addressLine1: Option[String],
-                    addressLine2: Option[String],
-                    addressLine3: Option[String],
-                    addressLine4: Option[String],
-                    addressLine5: Option[String],
-                    addressPostcode: Option[String],
-                    countryCode: Option[Int]
+case class Address( addressLine1: Option[String] = scala.None,
+                    addressLine2: Option[String] = scala.None,
+                    addressLine3: Option[String] = scala.None,
+                    addressLine4: Option[String] = scala.None,
+                    addressLine5: Option[String] = scala.None,
+                    addressPostcode: Option[String] = scala.None,
+                    countryCode: Option[Int] = scala.None
                   )
 
 object Address {
+
+  implicit val format: OFormat[Address] = Json.format[Address]
 
   def apply(address: IfAddress): Address =
     new Address(

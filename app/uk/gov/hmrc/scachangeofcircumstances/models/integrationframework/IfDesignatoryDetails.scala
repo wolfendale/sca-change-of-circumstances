@@ -30,7 +30,7 @@ object IfDesignatoryDetails {
 
 }
 
-case class IfDetails(marriageStatusType: Option[Int])
+case class IfDetails(marriageStatusType: Option[Int] = None)
 
 object IfDetails {
 
@@ -46,15 +46,15 @@ object IfNameList {
 
 }
 
-case class IfName(nameSequenceNumber: Option[Int],
-                  nameType: Option[Int],
-                  titleType: Option[Int],
-                  requestedName: Option[String],
-                  nameStartDate: Option[LocalDate],
-                  nameEndDate: Option[LocalDate],
-                  firstForename: Option[String],
-                  secondForename: Option[String],
-                  surname: Option[String] )
+case class IfName(nameSequenceNumber: Option[Int] = None,
+                  nameType: Option[Int] = None,
+                  titleType: Option[Int] = None,
+                  requestedName: Option[String] = None,
+                  nameStartDate: Option[LocalDate] = None,
+                  nameEndDate: Option[LocalDate] = None,
+                  firstForename: Option[String] = None,
+                  secondForename: Option[String] = None,
+                  surname: Option[String] = None)
 
 object IfName {
 
@@ -70,17 +70,17 @@ object IfAddressList {
 
 }
 
-case class IfAddress( addressSequenceNumber: Option[Int],
-                      countryCode: Option[Int],
-                      addressType: Option[Int],
-                      addressStartDate: Option[LocalDate],
-                      addressEndDate: Option[LocalDate],
-                      addressLine1: Option[String],
-                      addressLine2: Option[String],
-                      addressLine3: Option[String],
-                      addressLine4: Option[String],
-                      addressLine5: Option[String],
-                      addressPostcode: Option[String])
+case class IfAddress( addressSequenceNumber: Option[Int] = None,
+                      countryCode: Option[Int] = None,
+                      addressType: Option[Int] = None,
+                      addressStartDate: Option[LocalDate] = None,
+                      addressEndDate: Option[LocalDate] = None,
+                      addressLine1: Option[String] = None,
+                      addressLine2: Option[String] = None,
+                      addressLine3: Option[String] = None,
+                      addressLine4: Option[String] = None,
+                      addressLine5: Option[String] = None,
+                      addressPostcode: Option[String] = None)
 
 object IfAddress {
 

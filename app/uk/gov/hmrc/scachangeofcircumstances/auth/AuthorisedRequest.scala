@@ -14,18 +14,8 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.scachangeofcircumstances.controllers
+package uk.gov.hmrc.scachangeofcircumstances.auth
 
-import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future
+import play.api.mvc.{Request, WrappedRequest}
 
-@Singleton()
-class MicroserviceHelloWorldController @Inject()(cc: ControllerComponents)
-    extends BackendController(cc) {
-
-  def hello(): Action[AnyContent] = Action.async { implicit request =>
-    Future.successful(Ok("Hello world"))
-  }
-}
+case class AuthorisedRequest[A](request: Request[A], nino: Option[String]) extends WrappedRequest[A](request)

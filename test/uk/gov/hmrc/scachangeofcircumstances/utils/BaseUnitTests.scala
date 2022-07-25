@@ -17,14 +17,24 @@
 package uk.gov.hmrc.scachangeofcircumstances.utils
 
 import org.scalatest.freespec.AnyFreeSpec
+import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.inject
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.test.Helpers
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.scachangeofcircumstances.auth.AuthAction
+
+import scala.concurrent.ExecutionContext
 
 class BaseUnitTests extends AnyFreeSpec{
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
+  implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
   def appBuilder(): GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .overrides(inject.bind[AuthAction].toInstance(new TestAuthAction("", mock[AuthConnector], Helpers.stubBodyParser())))
     .configure(
       "metrics.enabled" -> false,
       "auditing.enabled" -> false

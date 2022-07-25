@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.models
 
+import play.api.libs.json._
+
 sealed trait MaritalStatus {
   def getCode: Int
 }
@@ -40,6 +42,17 @@ case object CivilPartnershipAnnulled extends BaseMaritalStatus(13)
 case object None extends BaseMaritalStatus(99)
 
 object MaritalStatus {
+
+  implicit val format: Format[MaritalStatus] = Format[MaritalStatus](
+    Reads {
+      case JsNumber(value) if value.isValidInt => JsSuccess(MaritalStatus(value.toIntExact))
+      case _ => JsError()
+    },
+    Writes[MaritalStatus](
+      value => JsNumber(value.getCode)
+    )
+  )
+
   def apply(code: Int): MaritalStatus = {
       code match {
         case 0 => MarriageTerminated

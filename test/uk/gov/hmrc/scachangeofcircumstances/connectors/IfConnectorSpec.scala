@@ -26,17 +26,16 @@ import org.scalatest.time.Span
 import play.api.Configuration
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.InternalServerException
-import uk.gov.hmrc.scachangeofcircumstances.models._
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
 import uk.gov.hmrc.scachangeofcircumstances.utils.{BaseUnitTests, WireMockHelper}
 
 import java.time.LocalDate
 
-class IfConnectorTest extends BaseUnitTests with WireMockHelper with ScalaFutures  {
+class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFutures  {
 
   val timeout: Timeout = Timeout(Span.Max)
 
-  lazy val ifConfig = Configuration(
+  lazy val ifConfig: Configuration = Configuration(
     "microservice.services.integration-framework.host" -> "127.0.0.1",
     "microservice.services.integration-framework.port" -> server.port(),
     "microservice.services.integration-framework.authorizationToken" -> "auth-token",
