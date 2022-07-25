@@ -16,21 +16,17 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.connectors
 
-import uk.gov.hmrc.http.{GatewayTimeoutException, HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.HttpReadsInstances._
+import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, InternalServerException, JsValidationException, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.scachangeofcircumstances.config.AppConfig
-import uk.gov.hmrc.scachangeofcircumstances.connectors.IfDesignatoryDetailsHttpParser._
 import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
-import uk.gov.hmrc.scachangeofcircumstances.models.{GatewayTimeout, IfErrorResponse}
-import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.IfContactDetails
+import uk.gov.hmrc.scachangeofcircumstances.models.IfErrorResponse
+import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.{IfContactDetails, IfDesignatoryDetails}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-
 class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit executionContext: ExecutionContext) extends Logging {
-
-  val host = appConfig.integrationFrameworkHost
-  val port = appConfig.integrationFrameworkPort
 
   val fields: String =
     "details(marriageStatusType),nameList(name(nameSequenceNumber,nameType,titleType," +
@@ -41,13 +37,25 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
 
   type IfContactDetailsResponse = Either[IfErrorResponse, IfContactDetails]
 
-  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[IfDesignatoryDetailsResponse] = {
+  type IfDesignatoryDetailsResponse = IfDesignatoryDetails
 
-    http.GET[IfDesignatoryDetailsResponse](s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$fields").recover {
-      case e: GatewayTimeoutException => {
-        logger.error(s"Request timeout from IF: $e")
-        Left(Seq(GatewayTimeout))
-      }
+  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[IfDesignatoryDetailsResponse] = {
+    http.GET[IfDesignatoryDetailsResponse](s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$fields").recoverWith {
+      case validationError: JsValidationException =>
+        logger.warn(s"Integration Framework JsValidationException encountered: $validationError")
+        Future.failed(new InternalServerException("Something went wrong."))
+      case Upstream5xxResponse(msg, code, _, _) =>
+        logger.warn(s"Integration Framework Upstream5xxResponse encountered: $code, $msg")
+        Future.failed(new InternalServerException("Something went wrong."))
+      case Upstream4xxResponse(msg, 404, _, _) =>
+        logger.warn(s"Integration Framework returned NotFound")
+        Future.failed(new NotFoundException(msg))
+      case Upstream4xxResponse(msg, code, _, _) =>
+        logger.warn(s"Integration Framework Upstream4xxResponse encountered: $code, $msg")
+        Future.failed(new InternalServerException("Something went wrong."))
+      case e: Exception =>
+        logger.warn(s"Integration Framework Exception encountered: ${e.getMessage}")
+        Future.failed(new InternalServerException("Something went wrong."))
     }
   }
 

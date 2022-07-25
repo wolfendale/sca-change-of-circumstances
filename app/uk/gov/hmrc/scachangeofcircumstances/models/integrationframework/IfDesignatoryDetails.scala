@@ -30,7 +30,7 @@ object IfDesignatoryDetails {
 
 }
 
-case class IfDetails(marriageStatusType: Int)
+case class IfDetails(marriageStatusType: Option[Int])
 
 object IfDetails {
 
@@ -46,15 +46,15 @@ object IfNameList {
 
 }
 
-case class IfName(nameSequenceNumber: Int,
-                  nameType: Int,
-                  titleType: Int,
-                  requestedName: String,
-                  nameStartDate: LocalDate,
-                  nameEndDate: LocalDate,
-                  firstForename: String,
-                  secondForename: String,
-                  surname: String )
+case class IfName(nameSequenceNumber: Option[Int],
+                  nameType: Option[Int],
+                  titleType: Option[Int],
+                  requestedName: Option[String],
+                  nameStartDate: Option[LocalDate],
+                  nameEndDate: Option[LocalDate],
+                  firstForename: Option[String],
+                  secondForename: Option[String],
+                  surname: Option[String] )
 
 object IfName {
 
@@ -70,17 +70,17 @@ object IfAddressList {
 
 }
 
-case class IfAddress( addressSequenceNumber: Int,
-                      countryCode: Int,
-                      addressType: Int,
-                      addressStartDate: LocalDate,
-                      addressEndDate: LocalDate,
-                      addressLine1: String,
-                      addressLine2: String,
-                      addressLine3: String,
-                      addressLine4: String,
-                      addressLine5: String,
-                      addressPostcode: String)
+case class IfAddress( addressSequenceNumber: Option[Int],
+                      countryCode: Option[Int],
+                      addressType: Option[Int],
+                      addressStartDate: Option[LocalDate],
+                      addressEndDate: Option[LocalDate],
+                      addressLine1: Option[String],
+                      addressLine2: Option[String],
+                      addressLine3: Option[String],
+                      addressLine4: Option[String],
+                      addressLine5: Option[String],
+                      addressPostcode: Option[String])
 
 object IfAddress {
 

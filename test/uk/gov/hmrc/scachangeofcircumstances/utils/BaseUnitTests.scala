@@ -14,23 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.scachangeofcircumstances.models
+package uk.gov.hmrc.scachangeofcircumstances.utils
 
-import play.api.libs.json.{Json, Reads}
+import org.scalatest.freespec.AnyFreeSpec
+import play.api.inject.guice.GuiceApplicationBuilder
+import uk.gov.hmrc.http.HeaderCarrier
 
-trait IfError
+class BaseUnitTests extends AnyFreeSpec{
 
-// Error responses returned from IF
-sealed case class IfErrorResponse(failures: Seq[IfFailure]) extends IfError
-// Exceptions triggered when communicating with IF
-sealed case class IfExceptionResponse(e: Throwable) extends IfError
+  implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
-object IfErrorResponse {
-  implicit val reads: Reads[IfErrorResponse] = Json.reads[IfErrorResponse]
-}
+  def appBuilder(): GuiceApplicationBuilder = new GuiceApplicationBuilder()
+    .configure(
+      "metrics.enabled" -> false,
+      "auditing.enabled" -> false
+    )
 
-case class IfFailure(code: String, reason: String)
-
-object IfFailure {
-  implicit val reads: Reads[IfFailure] = Json.reads[IfFailure]
 }

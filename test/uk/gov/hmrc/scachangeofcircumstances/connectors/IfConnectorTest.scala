@@ -16,55 +16,31 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.connectors
 
-import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.matchers.should.Matchers.{a, convertToAnyShouldWrapper}
 import org.scalatest.time.Span
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
-import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.Configuration
 import play.api.test.Helpers.running
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.scachangeofcircumstances.models._
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
+import uk.gov.hmrc.scachangeofcircumstances.utils.{BaseUnitTests, WireMockHelper}
 
 import java.time.LocalDate
 
-class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterAll with BeforeAndAfterEach {
-
-  val server: WireMockServer = new WireMockServer(wireMockConfig().dynamicPort())
+class IfConnectorTest extends BaseUnitTests with WireMockHelper with ScalaFutures  {
 
   val timeout: Timeout = Timeout(Span.Max)
 
-  override protected def beforeAll(): Unit = {
-    server.start()
-    super.beforeAll()
-  }
-
-  override protected def beforeEach(): Unit = {
-    server.resetAll()
-    super.beforeEach()
-  }
-
-  override protected def afterAll(): Unit = {
-    server.stop()
-    super.afterAll()
-  }
-
-  private def application(): Application = new GuiceApplicationBuilder()
-    .configure(
-      "microservice.services.integration-framework.host" -> "127.0.0.1",
-      "microservice.services.integration-framework.port" -> server.port(),
-      "microservice.services.integration-framework.authorizationToken" -> "auth-token",
-      "microservice.services.integration-framework.environment" -> "test-environment",
-      "metrics.enabled" -> false,
-      "auditing.enabled" -> false
-    ).build()
+  lazy val ifConfig = Configuration(
+    "microservice.services.integration-framework.host" -> "127.0.0.1",
+    "microservice.services.integration-framework.port" -> server.port(),
+    "microservice.services.integration-framework.authorizationToken" -> "auth-token",
+    "microservice.services.integration-framework.environment" -> "test-environment")
 
   val nino: String = "AB049513"
 
@@ -77,15 +53,13 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
 
   val url = s"/individuals/details/nino/$nino?fields=$fields"
 
-  implicit private lazy val hc: HeaderCarrier = HeaderCarrier()
-
   "getDesignatoryDetails" - {
 
     "when response is 200" - {
 
       "should return IfDesignatoryDetails when response can be parsed" in {
 
-        val app = application()
+        val app = appBuilder().configure(ifConfig).build()
 
         running(app) {
 
@@ -136,43 +110,43 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
           )
 
           val expectedObj = IfDesignatoryDetails(
-            details = IfDetails(4),
+            details = IfDetails(Option(4)),
             nameList = IfNameList(Seq(
               IfName(
-                nameSequenceNumber = 1,
-                nameType = 1,
-                titleType = 1,
-                requestedName = "Mister Thirty Five Characters Exact",
-                nameStartDate = LocalDate.of(1996, 12, 28),
-                nameEndDate = LocalDate.of(2017, 3, 31),
-                firstForename = "BBTESTFIRSTNAME",
-                secondForename = "CCTESTSECONDNAME",
-                surname = "AATESTSURNAME"
+                nameSequenceNumber = Option(1),
+                nameType = Option(1),
+                titleType = Option(1),
+                requestedName = Option("Mister Thirty Five Characters Exact"),
+                nameStartDate = Option(LocalDate.of(1996, 12, 28)),
+                nameEndDate = Option(LocalDate.of(2017, 3, 31)),
+                firstForename = Option("BBTESTFIRSTNAME"),
+                secondForename = Option("CCTESTSECONDNAME"),
+                surname = Option("AATESTSURNAME")
               ))),
             addressList = IfAddressList(Seq(
               IfAddress(
-                addressSequenceNumber = 2,
-                countryCode = 1,
-                addressType = 1,
-                addressStartDate = LocalDate.of(2003, 4, 30),
-                addressEndDate = LocalDate.of(2009, 12, 31),
-                addressLine1 = "88 TESTING ROAD",
-                addressLine2 = "TESTTOWN",
-                addressLine3 = "TESTREGION",
-                addressLine4 = "TESTAREA",
-                addressLine5 = "TESTSHIRE",
-                addressPostcode = "XX77 6YY"
+                addressSequenceNumber = Option(2),
+                countryCode = Option(1),
+                addressType = Option(1),
+                addressStartDate = Option(LocalDate.of(2003, 4, 30)),
+                addressEndDate = Option(LocalDate.of(2009, 12, 31)),
+                addressLine1 = Option("88 TESTING ROAD"),
+                addressLine2 = Option("TESTTOWN"),
+                addressLine3 = Option("TESTREGION"),
+                addressLine4 = Option("TESTAREA"),
+                addressLine5 = Option("TESTSHIRE"),
+                addressPostcode = Option("XX77 6YY")
               )))
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Right(expectedObj)
+          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual expectedObj
         }
       }
 
       "should return ErrorResponse when response cannot be parsed" in {
 
-        val app = application()
+        val app = appBuilder().configure(ifConfig).build()
 
         running(app) {
 
@@ -210,7 +184,10 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(InvalidJson))
+
+          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
+            e shouldBe a[InternalServerException]
+          }
         }
       }
     }
@@ -218,16 +195,17 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
     "should return ErrorResponse when IF returns error" - {
 
       "bad request" in {
-        val expectedResponse = """{
-                                 |  "failures": [
-                                 |    {
-                                 |      "code": "INVALID_CORRELATIONID",
-                                 |      "reason": "Submission has not passed validation. Invalid Header CorrelationId."
-                                 |    }
-                                 |  ]
-                                 |}""".stripMargin
+        val expectedResponse =
+          """{
+            |  "failures": [
+            |    {
+            |      "code": "INVALID_CORRELATIONID",
+            |      "reason": "Submission has not passed validation. Invalid Header CorrelationId."
+            |    }
+            |  ]
+            |}""".stripMargin
 
-        val app = application()
+        val app = appBuilder().configure(ifConfig).build()
 
         running(app) {
           server.stubFor(
@@ -236,7 +214,14 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(BadRequest))
+
+          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
+            e shouldBe a[InternalServerException]
+          }
+          //
+          //          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(IfErrorResponse(Seq(
+          //            IfFailure("INVALID_CORRELATIONID", "Submission has not passed validation. Invalid Header CorrelationId."))))
+          //        }
         }
       }
 
@@ -250,7 +235,7 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
                                  |  ]
                                  |}""".stripMargin
 
-        val app = application()
+        val app = appBuilder().configure(ifConfig).build()
 
         running(app) {
           server.stubFor(
@@ -259,7 +244,13 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(InternalServerError))
+
+          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
+            e shouldBe a[InternalServerException]
+          }
+
+//          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(IfErrorResponse(Seq(
+//            IfFailure("SERVER_ERROR", "IF is currently experiencing problems that require live service intervention."))))
         }
       }
 
@@ -273,7 +264,7 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
                                  |        ]
                                  |      }""".stripMargin
 
-        val app = application()
+        val app = appBuilder().configure(ifConfig).build()
 
         running(app) {
           server.stubFor(
@@ -282,7 +273,11 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(ServiceUnavailable))
+          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
+            e shouldBe a[InternalServerException]
+          }
+//          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(IfErrorResponse(Seq(
+//            IfFailure("SERVICE_UNAVAILABLE", "Dependent systems are currently not responding."))))
         }
       }
 
@@ -293,7 +288,7 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
 
     "should return ErrorResponse when returns timeout exception" in {
 
-      val app = application()
+      val app = appBuilder().configure(ifConfig).build()
 
       running(app) {
         server.stubFor(
@@ -305,7 +300,11 @@ class IfConnectorTest extends AnyFreeSpec with ScalaFutures with BeforeAndAfterA
         )
 
         val connector = app.injector.instanceOf[IfConnector]
-        connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(Seq(GatewayTimeout))
+        ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed, timeout) { e =>
+          e shouldBe a[InternalServerException]
+        }
+//        assert(x.isLeft)
+//        assert(x.left.get.getClass == classOf[IfExceptionResponse])
       }
     }
   }
