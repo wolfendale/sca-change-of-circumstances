@@ -39,15 +39,16 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
 
   private val fakeRequest = FakeRequest("GET", "/personal-details")
 
-  val nino = "J1234567D"
-
-  private val mockAuthAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubControllerComponents())
   private val mockService = mock[PersonalDetailsService]
-  private val controller = new PersonalDetailsController(mockAuthAction, mockService, Helpers.stubControllerComponents())
 
   "GET /" should {
 
     "return 200" in {
+
+      val nino = Some("J1234567D")
+
+      val mockAuthAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubControllerComponents())
+      val controller = new PersonalDetailsController(mockAuthAction, mockService, Helpers.stubControllerComponents())
 
       val expected = PersonalDetailsResponse(
         details = PersonalDetails(
@@ -57,10 +58,21 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
         )))
       )
 
-      when(mockService.getPersonalDetails(ArgumentMatchers.eq(nino))(any())).thenReturn(Future.successful(expected))
+      when(mockService.getPersonalDetails(ArgumentMatchers.eq(nino.get))(any())).thenReturn(Future.successful(expected))
       val result = controller.getPersonalDetails()(fakeRequest)
       status(result) shouldBe Status.OK
       contentAsJson(result) shouldBe Json.toJson(expected)
+    }
+
+    "return 400 when NiNo cannot be identified" in {
+
+      val nino = None
+
+      val mockAuthAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubControllerComponents())
+      val controller = new PersonalDetailsController(mockAuthAction, mockService, Helpers.stubControllerComponents())
+
+      val result = controller.getPersonalDetails()(fakeRequest)
+      status(result) shouldBe Status.BAD_REQUEST
     }
   }
 }

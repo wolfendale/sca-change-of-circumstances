@@ -33,7 +33,7 @@ abstract class BaseUnitTests extends AnyFreeSpec {
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
-  val nino = "JH1234567"
+  val nino: Option[String] = Some("JH1234567")
 
   val authAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubControllerComponents())
 

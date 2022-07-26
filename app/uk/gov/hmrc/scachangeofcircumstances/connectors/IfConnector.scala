@@ -42,8 +42,8 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
       case Upstream5xxResponse(msg, code, _, _) =>
         logger.warn(s"Integration Framework Upstream5xxResponse encountered: $code, $msg")
         Future.failed(new InternalServerException("Something went wrong."))
-      case Upstream4xxResponse(msg, 404, _, _) =>
-        logger.warn(s"Integration Framework returned NotFound")
+      case Upstream4xxResponse(msg, 404, _, _) if msg.contains("IDENTIFIER_NOT_FOUND") =>
+        logger.warn(s"Integration Framework returned NiNo not found")
         Future.failed(new NotFoundException(msg))
       case Upstream4xxResponse(msg, code, _, _) =>
         logger.warn(s"Integration Framework Upstream4xxResponse encountered: $code, $msg")

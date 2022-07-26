@@ -50,7 +50,7 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests with WireMock
       "addressEndDate,addressLine1,addressLine2,addressLine3,addressLine4,addressLine5," +
       "addressPostcode))"
 
-  val url = s"/individuals/details/nino/$nino?fields=$fields"
+  val url = s"/individuals/details/nino/${nino.get}?fields=$fields"
 
   "GET /" - {
 

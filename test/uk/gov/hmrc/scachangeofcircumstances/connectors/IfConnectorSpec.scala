@@ -25,7 +25,7 @@ import org.scalatest.matchers.should.Matchers.{a, convertToAnyShouldWrapper}
 import org.scalatest.time.Span
 import play.api.Configuration
 import play.api.test.Helpers.running
-import uk.gov.hmrc.http.InternalServerException
+import uk.gov.hmrc.http.{InternalServerException, NotFoundException}
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
 import uk.gov.hmrc.scachangeofcircumstances.utils.{BaseUnitTests, WireMockHelper}
 
@@ -41,7 +41,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
     "microservice.services.integration-framework.authorizationToken" -> "auth-token",
     "microservice.services.integration-framework.environment" -> "test-environment")
 
-  override val nino: String = "AB049513"
+  override val nino: Option[String] = Some("AB049513")
 
   val fields: String =
     "details(marriageStatusType),nameList(name(nameSequenceNumber,nameType,titleType," +
@@ -50,7 +50,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
       "addressEndDate,addressLine1,addressLine2,addressLine3,addressLine4,addressLine5," +
       "addressPostcode))"
 
-  val url = s"/individuals/details/nino/$nino?fields=$fields"
+  val url = s"/individuals/details/nino/${nino.get}?fields=$fields"
 
   "getDesignatoryDetails" - {
 
@@ -139,7 +139,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual expectedObj
+          connector.getDesignatoryDetails(nino.get).futureValue(timeout) mustEqual expectedObj
         }
       }
 
@@ -184,7 +184,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
           val connector = app.injector.instanceOf[IfConnector]
 
-          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
+          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed) { e =>
             e shouldBe a[InternalServerException]
           }
         }
@@ -192,6 +192,33 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
     }
 
     "should return Exception when IF returns" - {
+
+      "not found response" in {
+        val expectedResponse =
+          """{
+            |  "failures": [
+            |    {
+            |      "code": "IDENTIFIER_NOT_FOUND",
+            |      "reason": "The remote endpoint has indicated that identifier supplied can not be found."
+            |    }
+            |  ]
+            |}""".stripMargin
+
+        val app = appBuilder().configure(ifConfig).build()
+
+        running(app) {
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(notFound().withBody(expectedResponse))
+          )
+
+          val connector = app.injector.instanceOf[IfConnector]
+
+          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed) { e =>
+            e shouldBe a[NotFoundException]
+          }
+        }
+      }
 
       "bad request error response" in {
         val expectedResponse =
@@ -214,7 +241,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
           val connector = app.injector.instanceOf[IfConnector]
 
-          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
+          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed) { e =>
             e shouldBe a[InternalServerException]
           }
         }
@@ -240,7 +267,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
           val connector = app.injector.instanceOf[IfConnector]
 
-          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
+          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed) { e =>
             e shouldBe a[InternalServerException]
           }
         }
@@ -265,7 +292,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           )
 
           val connector = app.injector.instanceOf[IfConnector]
-          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
+          ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed) { e =>
             e shouldBe a[InternalServerException]
           }
         }
@@ -286,7 +313,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
         )
 
         val connector = app.injector.instanceOf[IfConnector]
-        ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed, timeout) { e =>
+        ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed, timeout) { e =>
           e shouldBe a[InternalServerException]
         }
       }

@@ -24,7 +24,7 @@ import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class TestAuthAction @Inject()( val nino: String,
+class TestAuthAction @Inject()( val nino: Option[String],
                                 override val authConnector: AuthConnector,
                                 val cc: ControllerComponents  )
                               ( implicit val executionContext: ExecutionContext) extends AuthAction with AuthorisedFunctions with Logging {
@@ -32,7 +32,7 @@ class TestAuthAction @Inject()( val nino: String,
   override def parser: BodyParser[AnyContent] = cc.parsers.defaultBodyParser
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
-    block(AuthorisedRequest(request, Some(nino)))
+    block(AuthorisedRequest(request, nino))
   }
 
 }
