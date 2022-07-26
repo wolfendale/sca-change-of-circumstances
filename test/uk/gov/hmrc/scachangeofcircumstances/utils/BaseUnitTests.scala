@@ -35,7 +35,7 @@ abstract class BaseUnitTests extends AnyFreeSpec {
 
   val nino = "JH1234567"
 
-  val authAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubBodyParser())
+  val authAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubControllerComponents())
 
   def appBuilder(): GuiceApplicationBuilder = new GuiceApplicationBuilder()
     .overrides(inject.bind[AuthAction].toInstance(authAction))

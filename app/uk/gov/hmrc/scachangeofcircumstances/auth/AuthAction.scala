@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.auth
 
+import com.google.inject.ImplementedBy
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals._
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
@@ -26,13 +27,16 @@ import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
+@ImplementedBy(classOf[AuthActionImpl])
 trait AuthAction extends ActionBuilder[AuthorisedRequest, AnyContent] with ActionFunction[Request, AuthorisedRequest]
 
 class AuthActionImpl @Inject()(
                                 override val authConnector: AuthConnector,
-                                val parser: BodyParser[AnyContent]
+                                cc: ControllerComponents
                               ) (implicit val executionContext: ExecutionContext)
   extends AuthAction with AuthorisedFunctions with Logging {
+
+  override def parser: BodyParser[AnyContent] = cc.parsers.defaultBodyParser
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
 

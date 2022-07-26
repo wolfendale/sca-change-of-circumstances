@@ -24,12 +24,10 @@ import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatest.time.Span
 import play.api.Configuration
 import play.api.http.Status
-import play.api.inject._
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import uk.gov.hmrc.scachangeofcircumstances.controllers.PersonalDetailsController
-import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.IfDesignatoryDetails._
 import uk.gov.hmrc.scachangeofcircumstances.models.{Name, PersonalDetails, PersonalDetailsResponse}
 import uk.gov.hmrc.scachangeofcircumstances.utils.{BaseUnitTests, WireMockHelper}
 

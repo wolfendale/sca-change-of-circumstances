@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.utils
 
-import play.api.mvc.{AnyContent, BodyParser, Request, Result}
+import play.api.mvc.{AnyContent, BodyParser, ControllerComponents, Request, Result}
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.scachangeofcircumstances.auth.{AuthAction, AuthorisedRequest}
 import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
@@ -24,12 +24,12 @@ import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class TestAuthAction @Inject()(
-                                val nino: String,
+class TestAuthAction @Inject()( val nino: String,
                                 override val authConnector: AuthConnector,
-                                val parser: BodyParser[AnyContent]
-                              )
-                              (implicit val executionContext: ExecutionContext) extends AuthAction with AuthorisedFunctions with Logging {
+                                val cc: ControllerComponents  )
+                              ( implicit val executionContext: ExecutionContext) extends AuthAction with AuthorisedFunctions with Logging {
+
+  override def parser: BodyParser[AnyContent] = cc.parsers.defaultBodyParser
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
     block(AuthorisedRequest(request, Some(nino)))

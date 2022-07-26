@@ -41,7 +41,7 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
 
   val nino = "J1234567D"
 
-  private val mockAuthAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubBodyParser())
+  private val mockAuthAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubControllerComponents())
   private val mockService = mock[PersonalDetailsService]
   private val controller = new PersonalDetailsController(mockAuthAction, mockService, Helpers.stubControllerComponents())
 
