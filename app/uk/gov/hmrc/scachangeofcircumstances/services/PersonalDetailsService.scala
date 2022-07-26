@@ -20,19 +20,19 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.scachangeofcircumstances.connectors.IfConnector
 import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.{IfAddress, IfName}
-import uk.gov.hmrc.scachangeofcircumstances.models.{Address, MaritalStatus, Name, PersonalDetails}
+import uk.gov.hmrc.scachangeofcircumstances.models.{Address, Name, PersonalDetails, PersonalDetailsResponse}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class PersonalDetailsService @Inject()(connector: IfConnector)(implicit ec: ExecutionContext) extends Logging {
 
-  def getPersonalDetails(nino: String)(implicit hc: HeaderCarrier): Future[PersonalDetails] = {
+  def getPersonalDetails(nino: String)(implicit hc: HeaderCarrier): Future[PersonalDetailsResponse] = {
 
     connector.getDesignatoryDetails(nino).map { details =>
 
-        // TODO: Check assumption of real name
-        // TODO: Check assumption that address / nameIncrementNumber can be used to find most recent
+        // TODO: Check assumption behind name logic
+        // TODO: Check assumption that address / nameIncrementNumber can be used to find most recent address / name
 
         val realKnownAsNames: (Seq[IfName], Seq[IfName]) = details.nameList.name.partition(_.nameType.contains(1))
         val residentialCorrespondenceAddresses: (Seq[IfAddress], Seq[IfAddress]) = details.addressList.address.partition(_.addressType.contains(1))
@@ -42,9 +42,10 @@ class PersonalDetailsService @Inject()(connector: IfConnector)(implicit ec: Exec
         else
           realKnownAsNames._2.sortBy(_.nameSequenceNumber).takeRight(1).headOption
 
-        PersonalDetails(
-          name.map(Name.apply),
-          details.details.marriageStatusType.map(MaritalStatus.apply),
+        PersonalDetailsResponse(
+          PersonalDetails(
+            name.map(Name.apply),
+            details.details.marriageStatusType),
           residentialCorrespondenceAddresses._1.sortBy(_.addressSequenceNumber).takeRight(1).headOption.map(Address.apply),
           residentialCorrespondenceAddresses._2.sortBy(_.addressSequenceNumber).takeRight(1).headOption.map(Address.apply)
         )

@@ -41,7 +41,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
     "microservice.services.integration-framework.authorizationToken" -> "auth-token",
     "microservice.services.integration-framework.environment" -> "test-environment")
 
-  val nino: String = "AB049513"
+  override val nino: String = "AB049513"
 
   val fields: String =
     "details(marriageStatusType),nameList(name(nameSequenceNumber,nameType,titleType," +
@@ -217,10 +217,6 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
             e shouldBe a[InternalServerException]
           }
-          //
-          //          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(IfErrorResponse(Seq(
-          //            IfFailure("INVALID_CORRELATIONID", "Submission has not passed validation. Invalid Header CorrelationId."))))
-          //        }
         }
       }
 
@@ -247,9 +243,6 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
             e shouldBe a[InternalServerException]
           }
-
-//          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(IfErrorResponse(Seq(
-//            IfFailure("SERVER_ERROR", "IF is currently experiencing problems that require live service intervention."))))
         }
       }
 
@@ -275,14 +268,8 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed) { e =>
             e shouldBe a[InternalServerException]
           }
-//          connector.getDesignatoryDetails(nino).futureValue(timeout) mustEqual Left(IfErrorResponse(Seq(
-//            IfFailure("SERVICE_UNAVAILABLE", "Dependent systems are currently not responding."))))
         }
       }
-
-
-
-
     }
 
     "should return ErrorResponse when returns timeout exception" in {
@@ -302,8 +289,6 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
         ScalaFutures.whenReady(connector.getDesignatoryDetails(nino).failed, timeout) { e =>
           e shouldBe a[InternalServerException]
         }
-//        assert(x.isLeft)
-//        assert(x.left.get.getClass == classOf[IfExceptionResponse])
       }
     }
   }

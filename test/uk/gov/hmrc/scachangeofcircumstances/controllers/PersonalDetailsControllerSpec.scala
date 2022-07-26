@@ -27,7 +27,7 @@ import play.api.libs.json.Json
 import play.api.test.Helpers._
 import play.api.test.{FakeRequest, Helpers}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.scachangeofcircumstances.models.{Name, PersonalDetails}
+import uk.gov.hmrc.scachangeofcircumstances.models.{Name, PersonalDetails, PersonalDetailsResponse}
 import uk.gov.hmrc.scachangeofcircumstances.services.PersonalDetailsService
 import uk.gov.hmrc.scachangeofcircumstances.utils.TestAuthAction
 
@@ -37,7 +37,7 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
-  private val fakeRequest = FakeRequest("GET", "/")
+  private val fakeRequest = FakeRequest("GET", "/personal-details")
 
   val nino = "J1234567D"
 
@@ -49,11 +49,12 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
 
     "return 200" in {
 
-      val expected = PersonalDetails(
-        name = Some(Name(
-          firstForename = Some("John"),
-          surname = Some("Johnson")
-        ))
+      val expected = PersonalDetailsResponse(
+        details = PersonalDetails(
+          name = Some(Name(
+            firstForename = Some("John"),
+            surname = Some("Johnson")
+        )))
       )
 
       when(mockService.getPersonalDetails(ArgumentMatchers.eq(nino))(any())).thenReturn(Future.successful(expected))

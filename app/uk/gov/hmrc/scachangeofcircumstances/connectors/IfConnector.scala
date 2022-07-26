@@ -20,7 +20,6 @@ import uk.gov.hmrc.http.HttpReadsInstances._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, InternalServerException, JsValidationException, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.scachangeofcircumstances.config.AppConfig
 import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
-import uk.gov.hmrc.scachangeofcircumstances.models.IfErrorResponse
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.{IfContactDetails, IfDesignatoryDetails}
 
 import javax.inject.Inject
@@ -35,12 +34,8 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
       "addressEndDate,addressLine1,addressLine2,addressLine3,addressLine4,addressLine5," +
       "addressPostcode))"
 
-  type IfContactDetailsResponse = Either[IfErrorResponse, IfContactDetails]
-
-  type IfDesignatoryDetailsResponse = IfDesignatoryDetails
-
-  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[IfDesignatoryDetailsResponse] = {
-    http.GET[IfDesignatoryDetailsResponse](s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$fields").recoverWith {
+  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[IfDesignatoryDetails] = {
+    http.GET[IfDesignatoryDetails](s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$fields").recoverWith {
       case validationError: JsValidationException =>
         logger.warn(s"Integration Framework JsValidationException encountered: $validationError")
         Future.failed(new InternalServerException("Something went wrong."))
@@ -59,6 +54,6 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
     }
   }
 
-  def getContactDetails(): Future[IfContactDetailsResponse] = ???
+  def getContactDetails(): Future[IfContactDetails] = ???
 
 }

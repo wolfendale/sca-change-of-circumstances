@@ -31,8 +31,7 @@ trait AuthAction extends ActionBuilder[AuthorisedRequest, AnyContent] with Actio
 class AuthActionImpl @Inject()(
                                 override val authConnector: AuthConnector,
                                 val parser: BodyParser[AnyContent]
-                              )
-                              (implicit val executionContext: ExecutionContext)
+                              ) (implicit val executionContext: ExecutionContext)
   extends AuthAction with AuthorisedFunctions with Logging {
 
   override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {

@@ -19,7 +19,5 @@ package uk.gov.hmrc.scachangeofcircumstances.logging
 import org.slf4j.{Logger, LoggerFactory}
 
 trait Logging {
-
-  protected val logger: Logger =
-    LoggerFactory.getLogger("application." + getClass.getCanonicalName)
+  protected val logger: Logger = LoggerFactory.getLogger("application." + getClass.getCanonicalName)
 }

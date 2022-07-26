@@ -23,7 +23,7 @@ import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar.mock
 import uk.gov.hmrc.scachangeofcircumstances.connectors.IfConnector
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
-import uk.gov.hmrc.scachangeofcircumstances.models.{Address, Name, PersonalDetails}
+import uk.gov.hmrc.scachangeofcircumstances.models.{Address, Name, PersonalDetails, PersonalDetailsResponse}
 import uk.gov.hmrc.scachangeofcircumstances.utils.BaseUnitTests
 
 import scala.concurrent.Future
@@ -63,11 +63,12 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
 
         val service = new PersonalDetailsService(mockIfConnector)
 
-        val expected = PersonalDetails(
-          name = Some(Name(
-            firstForename = Some("John"),
-            surname = Some("Johnson")
-          ))
+        val expected = PersonalDetailsResponse(
+          details = PersonalDetails(
+            name = Some(Name(
+              firstForename = Some("John"),
+              surname = Some("Johnson")
+            )))
         )
 
         service.getPersonalDetails("123123132").futureValue shouldBe expected
@@ -99,11 +100,12 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
 
         val service = new PersonalDetailsService(mockIfConnector)
 
-        val expected = PersonalDetails(
-          name = Some(Name(
-            firstForename = Some("Brian"),
-            surname = Some("Brianson")
-          ))
+        val expected = PersonalDetailsResponse(
+          details = PersonalDetails(
+            name = Some(Name(
+              firstForename = Some("Brian"),
+              surname = Some("Brianson")
+            )))
         )
 
         service.getPersonalDetails("123123132").futureValue shouldBe expected
@@ -135,11 +137,12 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
 
         val service = new PersonalDetailsService(mockIfConnector)
 
-        val expected = PersonalDetails(
-          name = Some(Name(
-            firstForename = Some("Brian"),
-            surname = Some("Brianson")
-          ))
+        val expected = PersonalDetailsResponse(
+          details = PersonalDetails(
+            name = Some(Name(
+              firstForename = Some("Brian"),
+              surname = Some("Brianson")
+            )))
         )
 
         service.getPersonalDetails("123123132").futureValue shouldBe expected
@@ -158,7 +161,7 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
 
         val service = new PersonalDetailsService(mockIfConnector)
 
-        val expected = PersonalDetails()
+        val expected = PersonalDetailsResponse()
 
         service.getPersonalDetails("123123132").futureValue shouldBe expected
       }
@@ -193,7 +196,7 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
 
         val service = new PersonalDetailsService(mockIfConnector)
 
-        val expected = PersonalDetails(
+        val expected = PersonalDetailsResponse(
           residentialAddress = Some(Address(addressLine1 = Some("Residential 2"))),
           correspondenceAddress = Some(Address(addressLine1 = Some("Correspondence 2")))
         )

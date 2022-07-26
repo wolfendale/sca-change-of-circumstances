@@ -27,14 +27,18 @@ import uk.gov.hmrc.scachangeofcircumstances.auth.AuthAction
 
 import scala.concurrent.ExecutionContext
 
-class BaseUnitTests extends AnyFreeSpec{
+abstract class BaseUnitTests extends AnyFreeSpec {
 
   implicit lazy val hc: HeaderCarrier = HeaderCarrier()
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
+  val nino = "JH1234567"
+
+  val authAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubBodyParser())
+
   def appBuilder(): GuiceApplicationBuilder = new GuiceApplicationBuilder()
-    .overrides(inject.bind[AuthAction].toInstance(new TestAuthAction("", mock[AuthConnector], Helpers.stubBodyParser())))
+    .overrides(inject.bind[AuthAction].toInstance(authAction))
     .configure(
       "metrics.enabled" -> false,
       "auditing.enabled" -> false
