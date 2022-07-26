@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.scachangeofcircumstances.config
+package uk.gov.hmrc.scachangeofcircumstances.models.integrationframework
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
-
-class Module extends AbstractModule {
-
-  override def configure(): Unit = {
-    bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[AuthConnector]).to(classOf[DefaultAuthConnector])
-  }
-}
+case class IfContactDetails()
