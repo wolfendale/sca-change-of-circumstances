@@ -191,9 +191,9 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
       }
     }
 
-    "should return ErrorResponse when IF returns error" - {
+    "should return Exception when IF returns" - {
 
-      "bad request" in {
+      "bad request error response" in {
         val expectedResponse =
           """{
             |  "failures": [
@@ -220,7 +220,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
         }
       }
 
-      "server error" in {
+      "server error response" in {
         val expectedResponse = """{
                                  |  "failures": [
                                  |    {
@@ -246,7 +246,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
         }
       }
 
-      "service unavailable" in {
+      "service unavailable error response" in {
         val expectedResponse = """{
                                  |        "failures": [
                                  |        {
@@ -272,7 +272,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
       }
     }
 
-    "should return ErrorResponse when returns timeout exception" in {
+    "should throw internal server exception when timeout exception encountered" in {
 
       val app = appBuilder().configure(ifConfig).build()
 
