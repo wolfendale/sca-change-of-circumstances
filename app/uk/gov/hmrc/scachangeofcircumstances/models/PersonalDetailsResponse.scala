@@ -20,26 +20,26 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.{IfAddress, IfName}
 
 case class PersonalDetailsResponse( details: PersonalDetails = PersonalDetails(),
-                                    residentialAddress: Option[Address] = scala.None,
-                                    correspondenceAddress: Option[Address] = scala.None )
+                                    contactDetails: Option[ContactDetails] = None,
+                                    residentialAddress: Option[Address] = None,
+                                    correspondenceAddress: Option[Address] = None )
 
 object PersonalDetailsResponse {
   implicit val format: OFormat[PersonalDetailsResponse] = Json.format[PersonalDetailsResponse]
 }
 
-case class PersonalDetails(  name: Option[Name] = scala.None,
-                             maritalStatus: Option[Int] = scala.None )
+case class PersonalDetails(  name: Option[Name] = None,
+                             maritalStatus: Option[Int] = None )
 
 object PersonalDetails {
   implicit val format: OFormat[PersonalDetails] = Json.format[PersonalDetails]
 }
 
-case class Name( firstForename: Option[String] = scala.None,
-                 secondForename: Option[String] = scala.None,
-                 surname: Option[String] = scala.None,
-                 requestedName: Option[String] = scala.None,
-                 title: Option[Int] = scala.None
-               )
+case class Name( firstForename: Option[String] = None,
+                 secondForename: Option[String] = None,
+                 surname: Option[String] = None,
+                 requestedName: Option[String] = None,
+                 title: Option[Int] = None )
 
 object Name {
 
@@ -54,13 +54,22 @@ object Name {
   )
 }
 
-case class Address( addressLine1: Option[String] = scala.None,
-                    addressLine2: Option[String] = scala.None,
-                    addressLine3: Option[String] = scala.None,
-                    addressLine4: Option[String] = scala.None,
-                    addressLine5: Option[String] = scala.None,
-                    addressPostcode: Option[String] = scala.None,
-                    countryCode: Option[Int] = scala.None )
+case class ContactDetails( email: Option[String] = None,
+                           phoneNumber: Option[String] = None)
+
+object ContactDetails {
+
+  implicit val format: OFormat[ContactDetails] = Json.format[ContactDetails]
+
+}
+
+case class Address( addressLine1: Option[String] = None,
+                    addressLine2: Option[String] = None,
+                    addressLine3: Option[String] = None,
+                    addressLine4: Option[String] = None,
+                    addressLine5: Option[String] = None,
+                    addressPostcode: Option[String] = None,
+                    countryCode: Option[Int] = None )
 
 object Address {
 

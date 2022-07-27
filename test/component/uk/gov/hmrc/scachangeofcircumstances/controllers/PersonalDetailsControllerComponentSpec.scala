@@ -43,20 +43,25 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests with WireMock
     "microservice.services.integration-framework.authorizationToken" -> "auth-token",
     "microservice.services.integration-framework.environment" -> "test-environment")
 
-  val fields: String =
+  val designatoryDetailsFields: String =
     "details(marriageStatusType),nameList(name(nameSequenceNumber,nameType,titleType," +
       "requestedName,nameStartDate,nameEndDate,firstForename,secondForename,surname))," +
       "addressList(address(addressSequenceNumber,countryCode,addressType,addressStartDate," +
       "addressEndDate,addressLine1,addressLine2,addressLine3,addressLine4,addressLine5," +
       "addressPostcode))"
 
-  val url = s"/individuals/details/nino/${nino.get}?fields=$fields"
+  val contactDetailsFields: String = "contactDetails(code,type,detail)"
+
+  val designatoryDetailsUrl = s"/individuals/details/nino/${nino.get}?fields=$designatoryDetailsFields"
+
+  val contactDetailsUrl = s"/individuals/details/contact/nino/${nino.get}?fields=$contactDetailsFields"
+
 
   "GET /" - {
 
     "return 200" in {
 
-      val ifResponse = """{
+      val designatoryDetailsResponse = """{
                             |  "details": { },
                             |  "nameList": {
                             |    "name": [
@@ -74,9 +79,16 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests with WireMock
                             |}
                             |""".stripMargin
 
+
+      val contactDetailsResponse = "{}"
+
       server.stubFor(
-        WireMock.get(urlEqualTo(url))
-          .willReturn(ok(ifResponse)))
+        WireMock.get(urlEqualTo(designatoryDetailsUrl))
+          .willReturn(ok(designatoryDetailsResponse)))
+
+      server.stubFor(
+        WireMock.get(urlEqualTo(contactDetailsUrl))
+          .willReturn(ok(contactDetailsResponse)))
 
       val expected = PersonalDetailsResponse(
         details = PersonalDetails(
