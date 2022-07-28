@@ -23,6 +23,8 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.mvc.AnyContentAsEmpty
+import play.api.test.FakeRequest
 import uk.gov.hmrc.scachangeofcircumstances.connectors.IfConnector
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
 import uk.gov.hmrc.scachangeofcircumstances.models.{Address, ContactDetails, Name, PersonalDetails, PersonalDetailsResponse}
@@ -34,6 +36,9 @@ import scala.concurrent.Future
 class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with BeforeAndAfterEach {
 
   private val mockIfConnector = mock[IfConnector]
+
+  implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", s"/personal-details/")
+//    .withHeaders(correlationIdHeader)
 
   override protected def beforeEach(): Unit = {
     Mockito.reset(mockIfConnector)
@@ -66,10 +71,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
 
         val contactDetailsResponse = IfContactDetails(None)
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
@@ -108,10 +113,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
 
         val contactDetailsResponse = IfContactDetails(None)
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
@@ -150,10 +155,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
 
         val contactDetailsResponse = IfContactDetails(None)
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
@@ -179,10 +184,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
 
         val contactDetailsResponse = IfContactDetails(None)
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
@@ -220,10 +225,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
 
         val contactDetailsResponse = IfContactDetails(None)
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
@@ -252,10 +257,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
           )
         ))
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
@@ -283,10 +288,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
           )
         ))
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
@@ -313,10 +318,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
           )
         ))
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
@@ -345,10 +350,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
           )
         ))
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
@@ -375,10 +380,10 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
           )
         ))
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
           .thenReturn(Future.successful(designatoryDetailsResponse))
 
-        when(mockIfConnector.getContactDetails(any())(any()))
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
           .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)

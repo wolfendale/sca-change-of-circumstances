@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.services
 
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.scachangeofcircumstances.connectors.IfConnector
 import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
@@ -63,7 +64,7 @@ class PersonalDetailsService @Inject()(connector: IfConnector)(implicit ec: Exec
     }
   }
 
-  def getPersonalDetails(nino: String)(implicit hc: HeaderCarrier): Future[PersonalDetailsResponse] = {
+  def getPersonalDetails(nino: String)(implicit hc: HeaderCarrier, request: RequestHeader): Future[PersonalDetailsResponse] = {
     for {
       designatoryDetails <- connector.getDesignatoryDetails(nino)
       contactDetails <- connector.getContactDetails(nino)

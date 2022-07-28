@@ -24,6 +24,8 @@ import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers.{a, convertToAnyShouldWrapper}
 import org.scalatest.time.Span
 import play.api.Configuration
+import play.api.mvc.AnyContentAsEmpty
+import play.api.test.FakeRequest
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.{InternalServerException, NotFoundException}
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
@@ -34,6 +36,9 @@ import java.time.LocalDate
 class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFutures  {
 
   val timeout: Timeout = Timeout(Span.Max)
+
+  implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", s"/personal-details/")
+  //    .withHeaders(correlationIdHeader)
 
   lazy val ifConfig: Configuration = Configuration(
     "microservice.services.integration-framework.host" -> "127.0.0.1",

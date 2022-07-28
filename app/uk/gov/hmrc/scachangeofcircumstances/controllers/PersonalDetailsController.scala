@@ -34,7 +34,7 @@ class PersonalDetailsController @Inject()( authAction: AuthAction,
                                            cc: ControllerComponents )
                                          ( implicit val ec: ExecutionContext) extends BackendController(cc) {
 
-  def getPersonalDetails(): Action[AnyContent] = authAction.async { request =>
+  def getPersonalDetails(): Action[AnyContent] = authAction.async { implicit request =>
       implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
       request.nino match {
         case Some(nino) => personalDetailsService.getPersonalDetails(nino).map(details => Ok(Json.toJson(details)))
