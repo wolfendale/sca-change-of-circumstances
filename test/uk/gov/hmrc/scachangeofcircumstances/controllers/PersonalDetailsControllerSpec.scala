@@ -73,6 +73,7 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
 
       val result = controller.getPersonalDetails()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
+//      contentAsJson()
     }
   }
 }

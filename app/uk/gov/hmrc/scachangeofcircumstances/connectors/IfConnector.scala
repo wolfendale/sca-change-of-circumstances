@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.connectors
 
+import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpReadsInstances._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, InternalServerException, JsValidationException, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, HttpClient, InternalServerException, JsValidationException, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
 import uk.gov.hmrc.scachangeofcircumstances.config.AppConfig
 import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework.{IfContactDetails, IfDesignatoryDetails}
@@ -36,14 +37,30 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
 
   private val contactDetailsFields: String = "contactDetails(code,type,detail)"
 
-  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier): Future[IfDesignatoryDetails] = {
-    http.GET[IfDesignatoryDetails](s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$designatoryDetailsFields")
-      .recoverWith(errorHandling[IfDesignatoryDetails])
+  // TODO: Check Authorisation, OriginatorID
+
+  private def setHeaders(requestHeader: RequestHeader) = Seq(
+    HeaderNames.authorisation -> s"Bearer ${appConfig.integrationFrameworkAuthToken}",
+    "Environment" -> appConfig.integrationFrameworkEnvironment,
+
+    // TODO: Add correlationId Logic
+
+    "CorrelationId" -> requestHeader.headers.get("CorrelationId").getOrElse("")
+  )
+
+  def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier, request: RequestHeader): Future[IfDesignatoryDetails] = {
+    val headers = setHeaders(request).+:(("OriginatorId" -> "DA2_BS_UNATTENDED"))
+    http.GET[IfDesignatoryDetails](
+      url = s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$designatoryDetailsFields",
+      headers = headers
+    ).recoverWith(errorHandling[IfDesignatoryDetails])
   }
 
-  def getContactDetails(nino: String)(implicit hc: HeaderCarrier): Future[IfContactDetails] = {
-    http.GET[IfContactDetails](s"${appConfig.ifBaseUrl}/individuals/details/contact/nino/${nino}?fields=$contactDetailsFields")
-      .recoverWith(errorHandling[IfContactDetails])
+  def getContactDetails(nino: String)(implicit hc: HeaderCarrier, request: RequestHeader): Future[IfContactDetails] = {
+    http.GET[IfContactDetails](
+      url = s"${appConfig.ifBaseUrl}/individuals/details/contact/nino/${nino}?fields=$contactDetailsFields",
+      headers = setHeaders(request)
+    ).recoverWith(errorHandling[IfContactDetails])
   }
 
   private def errorHandling[T]: PartialFunction[Throwable, Future[T]] = {
@@ -55,9 +72,9 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
       Future.failed(new InternalServerException("Something went wrong."))
     case Upstream4xxResponse(msg, 404, _, _) if msg.contains("IDENTIFIER_NOT_FOUND") || msg.contains("PERSON_NOT_FOUND") =>
       logger.warn(s"Integration Framework returned NiNo not found")
-      Future.failed(new NotFoundException(msg))
+      Future.failed(new NotFoundException("Record not found for provided NiNo."))
     case Upstream4xxResponse(msg, code, _, _) =>
-      logger.warn(s"Integration Framework Upstream4xxResponse encountered: $code, $msg")
+      logger.warn(s"Integration wFramework Upstream4xxResponse encountered: $code, $msg")
       Future.failed(new InternalServerException("Something went wrong."))
     case e: Exception =>
       logger.warn(s"Integration Framework Exception encountered: ${e.getMessage}")

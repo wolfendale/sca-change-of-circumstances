@@ -17,25 +17,28 @@
 package component.uk.gov.hmrc.scachangeofcircumstances.controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.client.WireMock.{ok, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock.{badRequest, notFound, ok, urlEqualTo}
 import org.scalatest.concurrent.PatienceConfiguration.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-import org.scalatest.time.Span
-import play.api.Configuration
+import org.scalatest.time.{Millis, Seconds, Span}
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.http.Status
 import play.api.libs.json.Json
-import play.api.test.FakeRequest
-import play.api.test.Helpers._
-import uk.gov.hmrc.scachangeofcircumstances.controllers.PersonalDetailsController
+import play.api.libs.ws.{WSClient, WSResponse}
+import play.api.{Application, Configuration}
+import uk.gov.hmrc.http.test.HttpClientSupport
 import uk.gov.hmrc.scachangeofcircumstances.models.{Name, PersonalDetails, PersonalDetailsResponse}
 import uk.gov.hmrc.scachangeofcircumstances.utils.{BaseUnitTests, WireMockHelper}
 
-class PersonalDetailsControllerComponentSpec extends BaseUnitTests with WireMockHelper with ScalaFutures  {
+class PersonalDetailsControllerComponentSpec extends BaseUnitTests
+  with GuiceOneServerPerSuite with WireMockHelper with ScalaFutures with HttpClientSupport  {
 
-  private val fakeRequest = FakeRequest("GET", "/personal-details")
+  implicit val timeout: Timeout = Timeout(Span.Max)
 
-  val timeout: Timeout = Timeout(Span.Max)
+  implicit val defaultPatienceConfig: PatienceConfig = PatienceConfig(
+      timeout = scaled(Span(15, Seconds)),
+      interval = scaled(Span(150, Millis)))
 
   lazy val ifConfig: Configuration = Configuration(
     "microservice.services.integration-framework.host" -> "127.0.0.1",
@@ -52,14 +55,23 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests with WireMock
 
   val contactDetailsFields: String = "contactDetails(code,type,detail)"
 
-  val designatoryDetailsUrl = s"/individuals/details/nino/${nino.get}?fields=$designatoryDetailsFields"
+  val ifDesignatoryDetails = s"/individuals/details/nino/${nino.get}?fields=$designatoryDetailsFields"
+  val ifContactDetails = s"/individuals/details/contact/nino/${nino.get}?fields=$contactDetailsFields"
 
-  val contactDetailsUrl = s"/individuals/details/contact/nino/${nino.get}?fields=$contactDetailsFields"
+  lazy val serviceUrl = s"http://localhost:$port/sca-change-of-circumstances"
 
+  override lazy val app: Application = appBuilder()
+    .configure(ifConfig)
+    .build()
+
+  def makeRequest(endpoint: String): WSResponse = {
+    val wsClient = app.injector.instanceOf[WSClient]
+    wsClient.url(endpoint).get().futureValue
+  }
 
   "GET /" - {
 
-    "return 200" in {
+    "return 200 response when data is returned from IF" in {
 
       val designatoryDetailsResponse = """{
                             |  "details": { },
@@ -83,11 +95,11 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests with WireMock
       val contactDetailsResponse = "{}"
 
       server.stubFor(
-        WireMock.get(urlEqualTo(designatoryDetailsUrl))
+        WireMock.get(urlEqualTo(ifDesignatoryDetails))
           .willReturn(ok(designatoryDetailsResponse)))
 
       server.stubFor(
-        WireMock.get(urlEqualTo(contactDetailsUrl))
+        WireMock.get(urlEqualTo(ifContactDetails))
           .willReturn(ok(contactDetailsResponse)))
 
       val expected = PersonalDetailsResponse(
@@ -98,16 +110,74 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests with WireMock
         )))
       )
 
-      val app = appBuilder()
-        .configure(ifConfig)
-        .build()
+      val result = makeRequest(s"$serviceUrl/personal-details")
+      result.status shouldBe Status.OK
+      result.json shouldBe Json.toJson(expected)
+    }
 
-      running(app) {
-        val controller = app.injector.instanceOf[PersonalDetailsController]
-        val result = controller.getPersonalDetails()(fakeRequest)
-        status(result) shouldBe Status.OK
-        contentAsJson(result) shouldBe Json.toJson(expected)
-      }
+    "return 500 when IF returns Bad Request" in {
+
+      val designatoryDetailsResponse = """{
+          |"failures": [
+          | {
+          |   "code": "INVALID_IDTYPE",
+          |   "reason": "Submission has not passed validation. Invalid parameter idType."
+          | }
+          |]
+          |}""".stripMargin
+
+      val contactDetailsResponse = "{}"
+
+      server.stubFor(
+        WireMock.get(urlEqualTo(ifDesignatoryDetails))
+          .willReturn(badRequest().withBody(designatoryDetailsResponse)))
+
+      server.stubFor(
+        WireMock.get(urlEqualTo(ifContactDetails))
+          .willReturn(ok(contactDetailsResponse)))
+
+      val expected =
+        """{
+          |   "statusCode": 500,
+          |   "message": "Something went wrong."
+          |}""".stripMargin
+
+      val result = makeRequest(s"$serviceUrl/personal-details")
+      result.status shouldBe Status.INTERNAL_SERVER_ERROR
+      result.json shouldBe Json.parse(expected)
+    }
+
+    "return 404 when IF cannot find record for NiNo" in {
+
+      val designatoryDetailsResponse = """{
+                                         |  "failures": [
+                                         |    {
+                                         |      "code": "IDENTIFIER_NOT_FOUND",
+                                         |      "reason": "The remote endpoint has indicated that identifier supplied can not be found."
+                                         |    }
+                                         |  ]
+                                         |}""".stripMargin
+
+
+      val contactDetailsResponse = "{}"
+
+      server.stubFor(
+        WireMock.get(urlEqualTo(ifDesignatoryDetails))
+          .willReturn(notFound().withBody(designatoryDetailsResponse)))
+
+      server.stubFor(
+        WireMock.get(urlEqualTo(ifContactDetails))
+          .willReturn(ok(contactDetailsResponse)))
+
+      val expected =
+        """{
+          |   "statusCode": 404,
+          |   "message": "Record not found for provided NiNo."
+          |}""".stripMargin
+
+      val result = makeRequest(s"$serviceUrl/personal-details")
+      result.status shouldBe Status.NOT_FOUND
+      result.json shouldBe Json.parse(expected)
     }
   }
 }
