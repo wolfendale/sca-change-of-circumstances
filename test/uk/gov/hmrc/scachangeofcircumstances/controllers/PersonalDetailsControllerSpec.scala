@@ -58,7 +58,7 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
         )))
       )
 
-      when(mockService.getPersonalDetails(ArgumentMatchers.eq(nino.get))(any())).thenReturn(Future.successful(expected))
+      when(mockService.getPersonalDetails(ArgumentMatchers.eq(nino.get))(any(), any())).thenReturn(Future.successful(expected))
       val result = controller.getPersonalDetails()(fakeRequest)
       status(result) shouldBe Status.OK
       contentAsJson(result) shouldBe Json.toJson(expected)
@@ -73,6 +73,7 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
 
       val result = controller.getPersonalDetails()(fakeRequest)
       status(result) shouldBe Status.BAD_REQUEST
+//      contentAsJson()
     }
   }
 }

@@ -20,7 +20,7 @@ import com.google.inject.ImplementedBy
 import play.api.mvc._
 import uk.gov.hmrc.auth.core.retrieve.v2.Retrievals._
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.{HeaderCarrier, UnauthorizedException}
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
 
@@ -28,23 +28,18 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 @ImplementedBy(classOf[AuthActionImpl])
-trait AuthAction extends ActionBuilder[AuthorisedRequest, AnyContent] with ActionFunction[Request, AuthorisedRequest]
+trait AuthAction extends ActionRefiner[Request, AuthorisedRequest]
 
-class AuthActionImpl @Inject()(
-                                override val authConnector: AuthConnector,
+class AuthActionImpl @Inject()( override val authConnector: AuthConnector,
                                 cc: ControllerComponents
                               ) (implicit val executionContext: ExecutionContext)
   extends AuthAction with AuthorisedFunctions with Logging {
 
-  override def parser: BodyParser[AnyContent] = cc.parsers.defaultBodyParser
-
-  override def invokeBlock[A](request: Request[A], block: AuthorisedRequest[A] => Future[Result]): Future[Result] = {
-
-    implicit val hc: HeaderCarrier =
-      HeaderCarrierConverter.fromRequestAndSession(request, request.session)
-
-    authorised().retrieve(nino) { nino =>
-      block(AuthorisedRequest(request, nino))
+  override protected def refine[A](request: Request[A]): Future[Either[Result, AuthorisedRequest[A]]] = {
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    authorised().retrieve(nino) {
+      case nino@Some(value) => Future.successful(Right(AuthorisedRequest(request, nino)))
+      case _ => throw new UnauthorizedException("Unable to retrieve National Insurance number")
     }
   }
 }

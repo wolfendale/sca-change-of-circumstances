@@ -16,4 +16,31 @@
 
 package uk.gov.hmrc.scachangeofcircumstances.models.integrationframework
 
-case class IfContactDetails()
+import play.api.libs.functional.syntax.{toFunctionalBuilderOps, unlift}
+import play.api.libs.json.{Format, JsPath, Json}
+
+case class IfContactDetails(contactDetails: Option[Seq[IfContactDetail]])
+
+object IfContactDetails {
+
+  implicit val format: Format[IfContactDetails] = Json.format[IfContactDetails]
+
+}
+
+case class IfContactDetail(code: Int, contactType: String, detail: String)
+
+object IfContactDetail {
+
+  implicit val format: Format[IfContactDetail] = Format(
+    (
+      (JsPath \ "code").read[Int] and
+      (JsPath \ "type").read[String] and
+      (JsPath \ "detail").read[String]
+    )(IfContactDetail.apply _),
+    (
+      (JsPath \ "code").write[Int] and
+      (JsPath \ "type").write[String] and
+      (JsPath \ "detail").write[String]
+    )(unlift(IfContactDetail.unapply))
+  )
+}

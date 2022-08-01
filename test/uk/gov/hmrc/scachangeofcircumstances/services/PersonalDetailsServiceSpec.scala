@@ -17,29 +17,40 @@
 package uk.gov.hmrc.scachangeofcircumstances.services
 
 import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito
 import org.mockito.Mockito.when
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.mockito.MockitoSugar.mock
+import play.api.mvc.AnyContentAsEmpty
+import play.api.test.FakeRequest
 import uk.gov.hmrc.scachangeofcircumstances.connectors.IfConnector
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
-import uk.gov.hmrc.scachangeofcircumstances.models.{Address, Name, PersonalDetails, PersonalDetailsResponse}
+import uk.gov.hmrc.scachangeofcircumstances.models.{Address, ContactDetails, Name, PersonalDetails, PersonalDetailsResponse}
 import uk.gov.hmrc.scachangeofcircumstances.utils.BaseUnitTests
 
 import scala.concurrent.Future
 
 
-class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
+class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with BeforeAndAfterEach {
+
+  private val mockIfConnector = mock[IfConnector]
+
+  implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", s"/personal-details/")
+//    .withHeaders(correlationIdHeader)
+
+  override protected def beforeEach(): Unit = {
+    Mockito.reset(mockIfConnector)
+  }
 
   "getPersonalDetails" - {
-
-    val mockIfConnector = mock[IfConnector]
 
     "when IF returns successful response" - {
 
       "must return real name if there is one" in {
 
-        val ifResponse = IfDesignatoryDetails(
+        val designatoryDetailsResponse = IfDesignatoryDetails(
           IfDetails(None),
           IfNameList(Seq(
             IfName(
@@ -58,8 +69,13 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
           IfAddressList(Seq())
         )
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
-          .thenReturn(Future.successful(ifResponse))
+        val contactDetailsResponse = IfContactDetails(None)
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
 
@@ -76,7 +92,7 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
 
       "must return most recent known-as name if there is there is no real name" in {
 
-        val ifResponse = IfDesignatoryDetails(
+        val designatoryDetailsResponse = IfDesignatoryDetails(
           IfDetails(None),
           IfNameList(Seq(
             IfName(
@@ -95,8 +111,13 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
           IfAddressList(Seq())
         )
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
-          .thenReturn(Future.successful(ifResponse))
+        val contactDetailsResponse = IfContactDetails(None)
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
 
@@ -113,7 +134,7 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
 
       "must return real name with highest nameSequenceNumber" in {
 
-        val ifResponse = IfDesignatoryDetails(
+        val designatoryDetailsResponse = IfDesignatoryDetails(
           IfDetails(None),
           IfNameList(Seq(
             IfName(
@@ -132,8 +153,13 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
           IfAddressList(Seq())
         )
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
-          .thenReturn(Future.successful(ifResponse))
+        val contactDetailsResponse = IfContactDetails(None)
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
 
@@ -150,14 +176,19 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
 
       "must return no name or address if no name or address is returned" in {
 
-        val ifResponse = IfDesignatoryDetails(
+        val designatoryDetailsResponse = IfDesignatoryDetails(
           IfDetails(None),
           IfNameList(Seq()),
           IfAddressList(Seq())
         )
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
-          .thenReturn(Future.successful(ifResponse))
+        val contactDetailsResponse = IfContactDetails(None)
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
 
@@ -168,7 +199,7 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
 
       "must return most recent residential and correspondence addresses" in {
 
-        val ifResponse = IfDesignatoryDetails(
+        val designatoryDetailsResponse = IfDesignatoryDetails(
           IfDetails(None),
           IfNameList(Seq()),
           IfAddressList(Seq(
@@ -191,14 +222,176 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures {
           ))
         )
 
-        when(mockIfConnector.getDesignatoryDetails(any())(any()))
-          .thenReturn(Future.successful(ifResponse))
+
+        val contactDetailsResponse = IfContactDetails(None)
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
 
         val service = new PersonalDetailsService(mockIfConnector)
 
         val expected = PersonalDetailsResponse(
           residentialAddress = Some(Address(addressLine1 = Some("Residential 2"))),
           correspondenceAddress = Some(Address(addressLine1 = Some("Correspondence 2")))
+        )
+
+        service.getPersonalDetails("123123132").futureValue shouldBe expected
+      }
+
+
+      "must prioritise daytime phone number if returned" in {
+
+        val designatoryDetailsResponse = IfDesignatoryDetails(
+          IfDetails(None),
+          IfNameList(Seq()),
+          IfAddressList(Seq()))
+
+        val contactDetailsResponse = IfContactDetails(Some(
+          Seq(
+            IfContactDetail(9, "MOBILE TELEPHONE", "07123 987654"),
+            IfContactDetail(7, "DAYTIME TELEPHONE", "01613214567"),
+            IfContactDetail(8, "EVENING TELEPHONE", "01619873210")
+          )
+        ))
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
+
+        val service = new PersonalDetailsService(mockIfConnector)
+
+        val expected = PersonalDetailsResponse(
+          contactDetails = Some(ContactDetails(
+            phoneNumber = Some("01613214567")
+          ))
+        )
+
+        service.getPersonalDetails("123123132").futureValue shouldBe expected
+      }
+
+      "must prioritise evening phone number if no daytime phone number returned" in {
+
+        val designatoryDetailsResponse = IfDesignatoryDetails(
+          IfDetails(None),
+          IfNameList(Seq()),
+          IfAddressList(Seq()))
+
+        val contactDetailsResponse = IfContactDetails(Some(
+          Seq(
+            IfContactDetail(8, "EVENING TELEPHONE", "01619873210"),
+            IfContactDetail(9, "MOBILE TELEPHONE", "07123 987654"),
+          )
+        ))
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
+
+        val service = new PersonalDetailsService(mockIfConnector)
+
+        val expected = PersonalDetailsResponse(
+          contactDetails = Some(ContactDetails(
+            phoneNumber = Some("01619873210")
+          ))
+        )
+
+        service.getPersonalDetails("123123132").futureValue shouldBe expected
+      }
+
+      "must return mobile phone number if no other phone number returned" in {
+
+        val designatoryDetailsResponse = IfDesignatoryDetails(
+          IfDetails(None),
+          IfNameList(Seq()),
+          IfAddressList(Seq()))
+
+        val contactDetailsResponse = IfContactDetails(Some(
+          Seq(
+            IfContactDetail(9, "MOBILE TELEPHONE", "07123 987654")
+          )
+        ))
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
+
+        val service = new PersonalDetailsService(mockIfConnector)
+
+        val expected = PersonalDetailsResponse(
+          contactDetails = Some(ContactDetails(
+            phoneNumber = Some("07123 987654")
+          ))
+        )
+
+        service.getPersonalDetails("123123132").futureValue shouldBe expected
+      }
+
+
+      "must prioritise primary e-mail address over secondary e-mail address" in {
+
+        val designatoryDetailsResponse = IfDesignatoryDetails(
+          IfDetails(None),
+          IfNameList(Seq()),
+          IfAddressList(Seq()))
+
+        val contactDetailsResponse = IfContactDetails(Some(
+          Seq(
+            IfContactDetail(11, "PRIMARY E-MAIL", "fred.blogs@hotmail.com"),
+            IfContactDetail(12, "SECONDARY E-MAIL", "john.blogs@hotmail.com")
+          )
+        ))
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
+
+        val service = new PersonalDetailsService(mockIfConnector)
+
+        val expected = PersonalDetailsResponse(
+          contactDetails = Some(ContactDetails(
+            email = Some("fred.blogs@hotmail.com")
+          ))
+        )
+
+        service.getPersonalDetails("123123132").futureValue shouldBe expected
+      }
+
+      "must return secondary e-mail address if no primary e-mail address returned" in {
+
+        val designatoryDetailsResponse = IfDesignatoryDetails(
+          IfDetails(None),
+          IfNameList(Seq()),
+          IfAddressList(Seq()))
+
+        val contactDetailsResponse = IfContactDetails(Some(
+          Seq(
+            IfContactDetail(12, "SECONDARY E-MAIL", "john.blogs@hotmail.com")
+          )
+        ))
+
+        when(mockIfConnector.getDesignatoryDetails(any())(any(), any()))
+          .thenReturn(Future.successful(designatoryDetailsResponse))
+
+        when(mockIfConnector.getContactDetails(any())(any(), any()))
+          .thenReturn(Future.successful(contactDetailsResponse))
+
+        val service = new PersonalDetailsService(mockIfConnector)
+
+        val expected = PersonalDetailsResponse(
+          contactDetails = Some(ContactDetails(
+            email = Some("john.blogs@hotmail.com")
+          ))
         )
 
         service.getPersonalDetails("123123132").futureValue shouldBe expected

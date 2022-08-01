@@ -24,6 +24,8 @@ import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatest.matchers.should.Matchers.{a, convertToAnyShouldWrapper}
 import org.scalatest.time.Span
 import play.api.Configuration
+import play.api.mvc.AnyContentAsEmpty
+import play.api.test.FakeRequest
 import play.api.test.Helpers.running
 import uk.gov.hmrc.http.{InternalServerException, NotFoundException}
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
@@ -35,6 +37,9 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
   val timeout: Timeout = Timeout(Span.Max)
 
+  implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", s"/personal-details/")
+  //    .withHeaders(correlationIdHeader)
+
   lazy val ifConfig: Configuration = Configuration(
     "microservice.services.integration-framework.host" -> "127.0.0.1",
     "microservice.services.integration-framework.port" -> server.port(),
@@ -43,16 +48,19 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
   override val nino: Option[String] = Some("AB049513")
 
-  val fields: String =
+  val designatoryDetailsFields: String =
     "details(marriageStatusType),nameList(name(nameSequenceNumber,nameType,titleType," +
       "requestedName,nameStartDate,nameEndDate,firstForename,secondForename,surname))," +
       "addressList(address(addressSequenceNumber,countryCode,addressType,addressStartDate," +
       "addressEndDate,addressLine1,addressLine2,addressLine3,addressLine4,addressLine5," +
       "addressPostcode))"
 
-  val url = s"/individuals/details/nino/${nino.get}?fields=$fields"
+  val contactDetailsFields: String = "contactDetails(code,type,detail)"
+
 
   "getDesignatoryDetails" - {
+
+    val url = s"/individuals/details/nino/${nino.get}?fields=$designatoryDetailsFields"
 
     "when response is 200" - {
 
@@ -314,6 +322,217 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
         val connector = app.injector.instanceOf[IfConnector]
         ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed, timeout) { e =>
+          e shouldBe a[InternalServerException]
+        }
+      }
+    }
+  }
+
+
+  "getContactDetails" - {
+
+    val url = s"/individuals/details/contact/nino/${nino.get}?fields=$contactDetailsFields"
+
+    "when response is 200" - {
+
+      "should return IfContactDetails when response can be parsed" in {
+
+        val app = appBuilder().configure(ifConfig).build()
+
+        running(app) {
+
+          val expectedResult =
+            """{
+              |"contactDetails": [
+              |{
+              |   "code": 9,
+              |   "type": "MOBILE TELEPHONE",
+              |   "detail": "07123 987654"
+              |},
+              |{
+              |   "code": 7,
+              |   "type": "DAYTIME TELEPHONE",
+              |   "detail": "01613214567"
+              |},
+              |{
+              |   "code": 8,
+              |   "type": "EVENING TELEPHONE",
+              |   "detail": "01619873210"
+              |},
+              |{
+              |   "code": 11,
+              |   "type": "PRIMARY E-MAIL",
+              |   "detail": "fred.blogs@hotmail.com"
+              |}
+              |] }""".stripMargin
+
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(ok(expectedResult))
+          )
+
+          val expectedObj = IfContactDetails(Some(
+            Seq(
+              IfContactDetail(9, "MOBILE TELEPHONE", "07123 987654"),
+              IfContactDetail(7, "DAYTIME TELEPHONE", "01613214567"),
+              IfContactDetail(8, "EVENING TELEPHONE", "01619873210"),
+              IfContactDetail(11, "PRIMARY E-MAIL", "fred.blogs@hotmail.com")
+            )
+          ))
+
+          val connector = app.injector.instanceOf[IfConnector]
+          connector.getContactDetails(nino.get).futureValue(timeout) mustEqual expectedObj
+        }
+      }
+
+      "should return ErrorResponse when response cannot be parsed" in {
+
+        val app = appBuilder().configure(ifConfig).build()
+
+        running(app) {
+
+          val expectedResult =
+            """{
+              |"contactDetails": "string" }""".stripMargin
+
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(ok(expectedResult))
+          )
+
+          val connector = app.injector.instanceOf[IfConnector]
+
+          ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed) { e =>
+            e shouldBe a[InternalServerException]
+          }
+        }
+      }
+    }
+
+    "should return Exception when IF returns" - {
+
+      "not found response" in {
+
+        val expectedResponse =
+          """{
+            |  "failures": [
+            |    {
+            |      "code": "PERSON_NOT_FOUND",
+            |      "reason": "The remote endpoint has indicated that no record could be found."
+            |    }
+            |  ]
+            |}""".stripMargin
+
+        val app = appBuilder().configure(ifConfig).build()
+
+        running(app) {
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(notFound().withBody(expectedResponse))
+          )
+
+          val connector = app.injector.instanceOf[IfConnector]
+
+          ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed) { e =>
+            e shouldBe a[NotFoundException]
+          }
+        }
+      }
+
+      "bad request error response" in {
+        val expectedResponse =
+          """{
+            |"failures": [
+            | {
+            |   "code": "INVALID_IDTYPE",
+            |   "reason": "Submission has not passed validation. Invalid parameter idType."
+            | }
+            |]
+            |}""".stripMargin
+
+        val app = appBuilder().configure(ifConfig).build()
+
+        running(app) {
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(badRequest().withBody(expectedResponse))
+          )
+
+          val connector = app.injector.instanceOf[IfConnector]
+
+          ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed) { e =>
+            e shouldBe a[InternalServerException]
+          }
+        }
+      }
+
+      "server error response" in {
+        val expectedResponse = """{
+                                 |  "failures": [
+                                 |    {
+                                 |      "code": "SERVER_ERROR",
+                                 |      "reason": "IF is currently experiencing problems that require live service intervention."
+                                 |    }
+                                 |  ]
+                                 |}""".stripMargin
+
+        val app = appBuilder().configure(ifConfig).build()
+
+        running(app) {
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(serverError().withBody(expectedResponse))
+          )
+
+          val connector = app.injector.instanceOf[IfConnector]
+
+          ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed) { e =>
+            e shouldBe a[InternalServerException]
+          }
+        }
+      }
+
+      "service unavailable error response" in {
+        val expectedResponse = """{
+                                 |        "failures": [
+                                 |        {
+                                 |          "code": "SERVICE_UNAVAILABLE",
+                                 |          "reason": "Dependent systems are currently not responding."
+                                 |        }
+                                 |        ]
+                                 |      }""".stripMargin
+
+        val app = appBuilder().configure(ifConfig).build()
+
+        running(app) {
+          server.stubFor(
+            WireMock.get(urlEqualTo(url))
+              .willReturn(serviceUnavailable().withBody(expectedResponse))
+          )
+
+          val connector = app.injector.instanceOf[IfConnector]
+          ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed) { e =>
+            e shouldBe a[InternalServerException]
+          }
+        }
+      }
+    }
+
+    "should throw internal server exception when timeout exception encountered" in {
+
+      val app = appBuilder().configure(ifConfig).build()
+
+      running(app) {
+        server.stubFor(
+          WireMock.get(urlEqualTo(url))
+            .willReturn(aResponse()
+              .withStatus(200)
+              .withBody("true")
+              .withFixedDelay(30000))
+        )
+
+        val connector = app.injector.instanceOf[IfConnector]
+        ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed, timeout) { e =>
           e shouldBe a[InternalServerException]
         }
       }
