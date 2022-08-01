@@ -74,7 +74,7 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
       logger.warn(s"Integration Framework returned NiNo not found")
       Future.failed(new NotFoundException("Record not found for provided NiNo."))
     case Upstream4xxResponse(msg, code, _, _) =>
-      logger.warn(s"Integration wFramework Upstream4xxResponse encountered: $code, $msg")
+      logger.warn(s"Integration Framework Upstream4xxResponse encountered: $code, $msg")
       Future.failed(new InternalServerException("Something went wrong."))
     case e: Exception =>
       logger.warn(s"Integration Framework Exception encountered: ${e.getMessage}")

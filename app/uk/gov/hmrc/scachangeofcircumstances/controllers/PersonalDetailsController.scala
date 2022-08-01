@@ -18,9 +18,7 @@ package uk.gov.hmrc.scachangeofcircumstances.controllers
 
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import uk.gov.hmrc.scachangeofcircumstances.auth.AuthAction
 import uk.gov.hmrc.scachangeofcircumstances.models.PersonalDetailsResponse._
 import uk.gov.hmrc.scachangeofcircumstances.services.PersonalDetailsService
@@ -34,11 +32,10 @@ class PersonalDetailsController @Inject()( authAction: AuthAction,
                                            cc: ControllerComponents )
                                          ( implicit val ec: ExecutionContext) extends BackendController(cc) {
 
-  def getPersonalDetails(): Action[AnyContent] = authAction.async { implicit request =>
-      implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
+  def getPersonalDetails(): Action[AnyContent] = cc.actionBuilder andThen authAction async { implicit request =>
       request.nino match {
         case Some(nino) => personalDetailsService.getPersonalDetails(nino).map(details => Ok(Json.toJson(details)))
         case None => Future.successful(BadRequest)
       }
-  }
+    }
 }
