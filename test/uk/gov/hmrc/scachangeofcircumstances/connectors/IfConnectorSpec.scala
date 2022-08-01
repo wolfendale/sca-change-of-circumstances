@@ -37,7 +37,10 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
   val timeout: Timeout = Timeout(Span.Max)
 
+  val correlationId = "e4206b42-11ac-11ed-861d-0242ac120002"
+
   implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", s"/personal-details/")
+    .withHeaders("CorrelationId" -> correlationId)
   //    .withHeaders(correlationIdHeader)
 
   lazy val ifConfig: Configuration = Configuration(
@@ -56,7 +59,6 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
       "addressPostcode))"
 
   val contactDetailsFields: String = "contactDetails(code,type,detail)"
-
 
   "getDesignatoryDetails" - {
 
