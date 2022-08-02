@@ -62,21 +62,9 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
       )
 
       when(mockService.getPersonalDetails(ArgumentMatchers.eq(nino.get))(any(), any())).thenReturn(Future.successful(expected))
-      val result = controller.getPersonalDetails()(fakeRequest)
+      val result = controller.getPersonalDetails(nino.get)(fakeRequest)
       status(result) shouldBe Status.OK
       contentAsJson(result) shouldBe Json.toJson(expected)
-    }
-
-    "return 400 when NiNo cannot be identified" in {
-
-      val nino = None
-
-      val mockAuthAction = new TestAuthAction(nino, mock[AuthConnector], Helpers.stubControllerComponents())
-      val controller = new PersonalDetailsController(mockAuthAction, mockService, Helpers.stubControllerComponents())
-
-      val result = controller.getPersonalDetails()(fakeRequest)
-      status(result) shouldBe Status.BAD_REQUEST
-//      contentAsJson()
     }
   }
 }

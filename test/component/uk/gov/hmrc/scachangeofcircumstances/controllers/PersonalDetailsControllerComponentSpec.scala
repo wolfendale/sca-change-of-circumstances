@@ -112,7 +112,7 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests
         )))
       )
 
-      val result = makeRequest(s"$serviceUrl/personal-details")
+      val result = makeRequest(s"$serviceUrl/personal-details/${nino.get}")
       result.status shouldBe Status.OK
       result.json shouldBe Json.toJson(expected)
     }
@@ -144,7 +144,7 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests
           |   "message": "Something went wrong."
           |}""".stripMargin
 
-      val result = makeRequest(s"$serviceUrl/personal-details")
+      val result = makeRequest(s"$serviceUrl/personal-details/${nino.get}")
       result.status shouldBe Status.INTERNAL_SERVER_ERROR
       result.json shouldBe Json.parse(expected)
     }
@@ -177,7 +177,7 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests
           |   "message": "Record not found for provided NiNo."
           |}""".stripMargin
 
-      val result = makeRequest(s"$serviceUrl/personal-details")
+      val result = makeRequest(s"$serviceUrl/personal-details/${nino.get}")
       result.status shouldBe Status.NOT_FOUND
       result.json shouldBe Json.parse(expected)
     }

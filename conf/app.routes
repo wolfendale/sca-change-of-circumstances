@@ -1,3 +1,3 @@
 # microservice specific routes
 
-GET        /personal-details             uk.gov.hmrc.scachangeofcircumstances.controllers.PersonalDetailsController.getPersonalDetails
+GET        /personal-details/:nino             uk.gov.hmrc.scachangeofcircumstances.controllers.PersonalDetailsController.getPersonalDetails(nino: String)
