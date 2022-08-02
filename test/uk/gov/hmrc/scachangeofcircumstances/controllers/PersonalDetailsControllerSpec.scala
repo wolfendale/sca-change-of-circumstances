@@ -37,7 +37,10 @@ class PersonalDetailsControllerSpec extends AnyWordSpec with Matchers {
 
   implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
+  val correlationId = "e4206b42-11ac-11ed-861d-0242ac120002"
+
   private val fakeRequest = FakeRequest("GET", "/personal-details")
+    .withHeaders("CorrelationId" -> correlationId)
 
   private val mockService = mock[PersonalDetailsService]
 

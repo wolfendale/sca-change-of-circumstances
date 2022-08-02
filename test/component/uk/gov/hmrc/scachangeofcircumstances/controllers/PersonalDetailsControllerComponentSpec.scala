@@ -36,6 +36,8 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests
 
   implicit val timeout: Timeout = Timeout(Span.Max)
 
+  val correlationId = "e4206b42-11ac-11ed-861d-0242ac120002"
+
   implicit val defaultPatienceConfig: PatienceConfig = PatienceConfig(
       timeout = scaled(Span(15, Seconds)),
       interval = scaled(Span(150, Millis)))
@@ -58,7 +60,7 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests
   val ifDesignatoryDetails = s"/individuals/details/nino/${nino.get}?fields=$designatoryDetailsFields"
   val ifContactDetails = s"/individuals/details/contact/nino/${nino.get}?fields=$contactDetailsFields"
 
-  lazy val serviceUrl = s"http://localhost:$port/sca-change-of-circumstances"
+  lazy val serviceUrl = s"http://localhost:$port"
 
   override lazy val app: Application = appBuilder()
     .configure(ifConfig)
@@ -66,7 +68,7 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests
 
   def makeRequest(endpoint: String): WSResponse = {
     val wsClient = app.injector.instanceOf[WSClient]
-    wsClient.url(endpoint).get().futureValue
+    wsClient.url(endpoint).withHttpHeaders("CorrelationId" -> correlationId).get().futureValue
   }
 
   "GET /" - {
