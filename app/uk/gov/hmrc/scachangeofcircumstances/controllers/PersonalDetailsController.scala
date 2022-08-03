@@ -32,10 +32,7 @@ class PersonalDetailsController @Inject()( authAction: AuthAction,
                                            cc: ControllerComponents )
                                          ( implicit val ec: ExecutionContext) extends BackendController(cc) {
 
-  def getPersonalDetails(): Action[AnyContent] = cc.actionBuilder andThen authAction async { implicit request =>
-      request.nino match {
-        case Some(nino) => personalDetailsService.getPersonalDetails(nino).map(details => Ok(Json.toJson(details)))
-        case None => Future.successful(BadRequest)
-      }
+  def getPersonalDetails(nino: String): Action[AnyContent] = cc.actionBuilder andThen authAction async { implicit request =>
+      personalDetailsService.getPersonalDetails(nino).map(details => Ok(Json.toJson(details)))
     }
 }

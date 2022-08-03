@@ -38,7 +38,6 @@ class PersonalDetailsServiceSpec extends BaseUnitTests with ScalaFutures with Be
   private val mockIfConnector = mock[IfConnector]
 
   implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest("GET", s"/personal-details/")
-//    .withHeaders(correlationIdHeader)
 
   override protected def beforeEach(): Unit = {
     Mockito.reset(mockIfConnector)
