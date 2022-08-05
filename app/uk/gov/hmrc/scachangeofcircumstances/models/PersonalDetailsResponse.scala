@@ -29,6 +29,7 @@ object PersonalDetailsResponse {
 }
 
 case class PersonalDetails(  name: Option[Name] = None,
+                             requestedName: Option[String] = None,
                              maritalStatus: Option[Int] = None )
 
 object PersonalDetails {
@@ -38,8 +39,7 @@ object PersonalDetails {
 case class Name( firstForename: Option[String] = None,
                  secondForename: Option[String] = None,
                  surname: Option[String] = None,
-                 requestedName: Option[String] = None,
-                 title: Option[Int] = None )
+                 title: Option[Int] = None)
 
 object Name {
 
@@ -49,7 +49,6 @@ object Name {
       firstForename = name.firstForename,
       secondForename = name.secondForename,
       surname = name.surname,
-      requestedName = name.requestedName,
       title = name.titleType
   )
 }

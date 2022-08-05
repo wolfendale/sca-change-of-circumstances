@@ -56,7 +56,7 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
     withCorrelationId { correlationId =>
       val headers = setHeaders(correlationId).+:(("OriginatorId" -> "DA2_BS_UNATTENDED"))
       http.GET[IfDesignatoryDetails](
-        url = s"${appConfig.ifBaseUrl}/individuals/details/nino/$nino?fields=$designatoryDetailsFields",
+        url = s"${appConfig.ifBaseUrl}/individuals/details/NINO/$nino?fields=$designatoryDetailsFields",
         headers = headers
       )
     } recoverWith errorHandling[IfDesignatoryDetails]

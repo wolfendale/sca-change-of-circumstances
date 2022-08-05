@@ -57,7 +57,7 @@ class PersonalDetailsControllerComponentSpec extends BaseUnitTests
 
   val contactDetailsFields: String = "contactDetails(code,type,detail)"
 
-  val ifDesignatoryDetails = s"/individuals/details/nino/${nino.get}?fields=$designatoryDetailsFields"
+  val ifDesignatoryDetails = s"/individuals/details/NINO/${nino.get}?fields=$designatoryDetailsFields"
   val ifContactDetails = s"/individuals/details/contact/nino/${nino.get}?fields=$contactDetailsFields"
 
   lazy val serviceUrl = s"http://localhost:$port"
