@@ -30,7 +30,7 @@ class PersonalDetailsService @Inject()(connector: IfConnector)(implicit ec: Exec
 
   // TODO: Check assumption behind name logic
 
-  private def getName(designatoryDetails: IfDesignatoryDetails): Option[Name] = {
+  private def getName(designatoryDetails: IfDesignatoryDetails): Option[IfName] = {
     val realKnownAsNames: (Seq[IfName], Seq[IfName]) = designatoryDetails.nameList.name.partition(_.nameType.contains(1))
 
     val name: Option[IfName] = if(realKnownAsNames._1.nonEmpty)
@@ -38,7 +38,7 @@ class PersonalDetailsService @Inject()(connector: IfConnector)(implicit ec: Exec
     else
       realKnownAsNames._2.sortBy(_.nameSequenceNumber).takeRight(1).headOption
 
-    name.map(Name.apply)
+    name
   }
 
   // TODO: Check assumption that address / nameIncrementNumber can be used to find most recent address / name
@@ -70,10 +70,12 @@ class PersonalDetailsService @Inject()(connector: IfConnector)(implicit ec: Exec
       contactDetails <- connector.getContactDetails(nino)
     } yield {
       val addresses = getAddresses(designatoryDetails)
+      val name = getName(designatoryDetails)
 
       PersonalDetailsResponse(
         details = PersonalDetails(
-          name = getName(designatoryDetails),
+          name = name.map(Name.apply),
+          requestedName = name.flatMap(_.requestedName),
           maritalStatus = designatoryDetails.details.marriageStatusType),
         contactDetails = getContactDetails(contactDetails),
         residentialAddress = addresses._1,
