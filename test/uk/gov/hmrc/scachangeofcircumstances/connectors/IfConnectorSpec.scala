@@ -62,7 +62,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
   "getDesignatoryDetails" - {
 
-    val url = s"/individuals/details/nino/${nino.get}?fields=$designatoryDetailsFields"
+    val url = s"/individuals/details/NINO/${nino.get}?fields=$designatoryDetailsFields"
 
     "when response is 200" - {
 
