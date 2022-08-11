@@ -18,7 +18,7 @@ package uk.gov.hmrc.scachangeofcircumstances.connectors
 
 import play.api.mvc.RequestHeader
 import uk.gov.hmrc.http.HttpReadsInstances._
-import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, HttpClient, InternalServerException, JsValidationException, NotFoundException, Upstream4xxResponse, Upstream5xxResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HeaderNames, HttpClient, InternalServerException, JsValidationException, NotFoundException, Upstream4xxResponse, Upstream5xxResponse, UpstreamErrorResponse}
 import uk.gov.hmrc.scachangeofcircumstances.config.AppConfig
 import uk.gov.hmrc.scachangeofcircumstances.exceptions.CorrelationIdException
 import uk.gov.hmrc.scachangeofcircumstances.logging.Logging
@@ -74,21 +74,21 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
   private def errorHandling[T]: PartialFunction[Throwable, Future[T]] = {
     case validationError: JsValidationException =>
       logger.warn(s"Integration Framework JsValidationException encountered: $validationError")
-      Future.failed(new InternalServerException("Something went wrong."))
+      Future.failed(validationError)
     case error: CorrelationIdException =>
       logger.warn(error.getMessage)
-      Future.failed(new InternalServerException("Something went wrong."))
+      Future.failed(error)
     case Upstream5xxResponse(msg, code, _, _) =>
       logger.warn(s"Integration Framework Upstream5xxResponse encountered: $code, $msg")
-      Future.failed(new InternalServerException("Something went wrong."))
+      Future.failed(UpstreamErrorResponse(msg, code))
     case Upstream4xxResponse(msg, 404, _, _) if msg.contains("IDENTIFIER_NOT_FOUND") || msg.contains("PERSON_NOT_FOUND") =>
       logger.warn(s"Integration Framework returned NiNo not found")
-      Future.failed(new NotFoundException("Record not found for provided NiNo."))
+      Future.failed(new NotFoundException(msg))
     case Upstream4xxResponse(msg, code, _, _) =>
       logger.warn(s"Integration Framework Upstream4xxResponse encountered: $code, $msg")
-      Future.failed(new InternalServerException("Something went wrong."))
+      Future.failed(UpstreamErrorResponse(msg, code))
     case e: Exception =>
       logger.warn(s"Integration Framework Exception encountered: ${e.getMessage}")
-      Future.failed(new InternalServerException("Something went wrong."))
+      Future.failed(new InternalServerException(e.getMessage))
   }
 }

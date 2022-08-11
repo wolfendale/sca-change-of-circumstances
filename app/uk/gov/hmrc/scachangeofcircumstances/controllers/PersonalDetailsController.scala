@@ -24,7 +24,7 @@ import uk.gov.hmrc.scachangeofcircumstances.models.PersonalDetailsResponse._
 import uk.gov.hmrc.scachangeofcircumstances.services.PersonalDetailsService
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton()
 class PersonalDetailsController @Inject()( authAction: AuthAction,
