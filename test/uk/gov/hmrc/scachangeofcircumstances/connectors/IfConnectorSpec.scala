@@ -27,7 +27,7 @@ import play.api.Configuration
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers.running
-import uk.gov.hmrc.http.{InternalServerException, NotFoundException}
+import uk.gov.hmrc.http.{InternalServerException, JsValidationException, NotFoundException, UpstreamErrorResponse}
 import uk.gov.hmrc.scachangeofcircumstances.models.integrationframework._
 import uk.gov.hmrc.scachangeofcircumstances.utils.{BaseUnitTests, WireMockHelper}
 
@@ -195,7 +195,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           val connector = app.injector.instanceOf[IfConnector]
 
           ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed) { e =>
-            e shouldBe a[InternalServerException]
+            e shouldBe a[JsValidationException]
           }
         }
       }
@@ -252,7 +252,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           val connector = app.injector.instanceOf[IfConnector]
 
           ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed) { e =>
-            e shouldBe a[InternalServerException]
+            e shouldBe a[UpstreamErrorResponse]
           }
         }
       }
@@ -278,7 +278,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           val connector = app.injector.instanceOf[IfConnector]
 
           ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed) { e =>
-            e shouldBe a[InternalServerException]
+            e shouldBe a[UpstreamErrorResponse]
           }
         }
       }
@@ -303,7 +303,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
           val connector = app.injector.instanceOf[IfConnector]
           ScalaFutures.whenReady(connector.getDesignatoryDetails(nino.get).failed) { e =>
-            e shouldBe a[InternalServerException]
+            e shouldBe a[UpstreamErrorResponse]
           }
         }
       }
@@ -405,7 +405,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           val connector = app.injector.instanceOf[IfConnector]
 
           ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed) { e =>
-            e shouldBe a[InternalServerException]
+            e shouldBe a[JsValidationException]
           }
         }
       }
@@ -463,7 +463,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           val connector = app.injector.instanceOf[IfConnector]
 
           ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed) { e =>
-            e shouldBe a[InternalServerException]
+            e shouldBe a[UpstreamErrorResponse]
           }
         }
       }
@@ -489,7 +489,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
           val connector = app.injector.instanceOf[IfConnector]
 
           ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed) { e =>
-            e shouldBe a[InternalServerException]
+            e shouldBe a[UpstreamErrorResponse]
           }
         }
       }
@@ -514,7 +514,7 @@ class IfConnectorSpec extends BaseUnitTests with WireMockHelper with ScalaFuture
 
           val connector = app.injector.instanceOf[IfConnector]
           ScalaFutures.whenReady(connector.getContactDetails(nino.get).failed) { e =>
-            e shouldBe a[InternalServerException]
+            e shouldBe a[UpstreamErrorResponse]
           }
         }
       }
