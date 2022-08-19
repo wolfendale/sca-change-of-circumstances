@@ -38,19 +38,7 @@ class CustomErrorHandler @Inject()(
   override def onServerError(request: RequestHeader, ex: Throwable): Future[Result] = {
     ex match {
       case _: NotFoundException =>  Future.successful(ErrorNotFound.toHttpResponse)
-      case _ => Future.successful(ErrorInternalServer("Something went wrong.").toHttpResponse)
+      case _ => Future.successful(ErrorInternalServer().toHttpResponse)
     }
   }
-
-//  override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
-//
-//    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request = request, session = request.session)
-//
-//    statusCode match {
-//      case NOT_FOUND =>
-//        Future.failed(new NotFoundException("Record not found for provided NiNo."))
-//      case _ =>
-//        Future.failed(new InternalServerException("Something went wrong."))
-//    }
-//  }
 }
