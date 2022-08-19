@@ -45,14 +45,10 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
   private def setHeaders(correlationId: UUID) = Seq(
     HeaderNames.authorisation -> s"Bearer ${appConfig.integrationFrameworkAuthToken}",
     "Environment" -> appConfig.integrationFrameworkEnvironment,
-
-    // TODO: Add correlationId Logic
-
     "CorrelationId" -> correlationId.toString
   )
 
   def getDesignatoryDetails(nino: String)(implicit hc: HeaderCarrier, request: RequestHeader): Future[IfDesignatoryDetails] = {
-
     withCorrelationId { correlationId =>
       val headers = setHeaders(correlationId).+:(("OriginatorId" -> "DA2_BS_UNATTENDED"))
       http.GET[IfDesignatoryDetails](
@@ -73,22 +69,21 @@ class IfConnector @Inject()(http: HttpClient, appConfig: AppConfig)(implicit exe
 
   private def errorHandling[T]: PartialFunction[Throwable, Future[T]] = {
     case validationError: JsValidationException =>
-      logger.warn(s"Integration Framework JsValidationException encountered: $validationError")
+      logger.warn(validationError.getMessage())
       Future.failed(validationError)
     case error: CorrelationIdException =>
       logger.warn(error.getMessage)
       Future.failed(error)
     case Upstream5xxResponse(msg, code, _, _) =>
-      logger.warn(s"Integration Framework Upstream5xxResponse encountered: $code, $msg")
+      logger.warn(s"IF Upstream5xxResponse encountered: $code, $msg")
       Future.failed(UpstreamErrorResponse(msg, code))
     case Upstream4xxResponse(msg, 404, _, _) if msg.contains("IDENTIFIER_NOT_FOUND") || msg.contains("PERSON_NOT_FOUND") =>
-      logger.warn(s"Integration Framework returned NiNo not found")
       Future.failed(new NotFoundException(msg))
     case Upstream4xxResponse(msg, code, _, _) =>
-      logger.warn(s"Integration Framework Upstream4xxResponse encountered: $code, $msg")
+      logger.warn(s"IF Upstream4xxResponse encountered: $code, $msg")
       Future.failed(UpstreamErrorResponse(msg, code))
     case e: Exception =>
-      logger.warn(s"Integration Framework Exception encountered: ${e.getMessage}")
+      logger.warn(s"IF Exception encountered: ${e.getMessage}")
       Future.failed(new InternalServerException(e.getMessage))
   }
 }
