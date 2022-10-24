@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.scachangeofcircumstances.config
+package uk.gov.hmrc.scachangeofcircumstances.models.addresslookup
 
-import com.google.inject.AbstractModule
-import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.play.bootstrap.auth.DefaultAuthConnector
-import uk.gov.hmrc.scachangeofcircumstances.connectors.{AddressLookupConnector, AddressLookupConnectorImpl}
+import play.api.libs.json.{Json, OFormat}
 
-class Module extends AbstractModule {
+case class AddressLookupRequest (postcode: String, filter: Option[String])
 
-  override def configure(): Unit = {
-    bind(classOf[AppConfig]).asEagerSingleton()
-    bind(classOf[AuthConnector]).to(classOf[DefaultAuthConnector])
-    bind(classOf[AddressLookupConnector]).to(classOf[AddressLookupConnectorImpl])
-  }
+object AddressLookupRequest {
+
+  implicit val format: OFormat[AddressLookupRequest] = Json.format[AddressLookupRequest]
+
 }

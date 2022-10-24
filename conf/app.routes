@@ -1,3 +1,4 @@
 # microservice specific routes
 
 GET        /personal-details/:nino             uk.gov.hmrc.scachangeofcircumstances.controllers.PersonalDetailsController.getPersonalDetails(nino: String)
+POST       /address-lookup/lookup              uk.gov.hmrc.scachangeofcircumstances.controllers.AddressLookupController.lookup()

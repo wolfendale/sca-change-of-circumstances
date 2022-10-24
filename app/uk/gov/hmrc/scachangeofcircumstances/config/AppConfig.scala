@@ -32,4 +32,7 @@ class AppConfig @Inject()(config: Configuration) {
 
   val ifBaseUrl = s"$integrationFrameworkProtocol://$integrationFrameworkHost:$integrationFrameworkPort"
 
+  val addressLookupBaseUrl         = config.get[Service]("microservice.services.address-lookup").baseUrl
+
+
 }
